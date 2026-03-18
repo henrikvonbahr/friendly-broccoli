@@ -185,10 +185,13 @@ export default function App() {
   }, [])
 
   useEffect(() => {
-    if (guestMode || !session) { setExpenses([]); return }
-    supabase.from('expenses').select('*').then(({ data, error }) => {
-      if (!error) setExpenses(data ?? [])
-    })
+    let cancelled = false
+    ;(async () => {
+      if (guestMode || !session) { setExpenses([]); return }
+      const { data, error } = await supabase.from('expenses').select('*')
+      if (!cancelled && !error) setExpenses(data ?? [])
+    })()
+    return () => { cancelled = true }
   }, [session, guestMode])
 
   function prevMonth() {
