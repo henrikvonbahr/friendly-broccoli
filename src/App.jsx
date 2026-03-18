@@ -1,4 +1,5 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useMemo } from 'react'
+import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, Cell } from 'recharts'
 import { supabase } from './supabaseClient'
 import Auth from './Auth'
 import './App.css'
@@ -65,6 +66,48 @@ function Summary({ expenses }) {
   )
 }
 
+function ChartTooltip({ active, payload, label }) {
+  if (!active || !payload?.length) return null
+  return (
+    <div className="chart-tooltip">
+      <p className="chart-tooltip-label">{label}</p>
+      <p className="chart-tooltip-value">{payload[0].value.toFixed(2)} kr</p>
+    </div>
+  )
+}
+
+function SpendingChart({ data }) {
+  const accentColor = useMemo(
+    () => getComputedStyle(document.documentElement).getPropertyValue('--accent').trim() || '#aa3bff',
+    []
+  )
+  return (
+    <div className="spending-chart card">
+      <h2>Last 6 months</h2>
+      <ResponsiveContainer width="100%" height={180}>
+        <BarChart data={data} barCategoryGap="35%">
+          <XAxis
+            dataKey="label"
+            axisLine={false}
+            tickLine={false}
+            tick={{ fontSize: 13, fill: 'var(--text)' }}
+          />
+          <YAxis hide width={0} />
+          <Tooltip content={<ChartTooltip />} cursor={{ fill: 'var(--accent-bg)' }} />
+          <Bar dataKey="total" radius={[4, 4, 0, 0]}>
+            {data.map((entry, i) => (
+              <Cell
+                key={i}
+                fill={entry.isCurrent ? accentColor : `${accentColor}55`}
+              />
+            ))}
+          </Bar>
+        </BarChart>
+      </ResponsiveContainer>
+    </div>
+  )
+}
+
 function AddExpenseForm({ onAdd, defaultDate }) {
   const [form, setForm] = useState({
     date: defaultDate,
@@ -127,14 +170,57 @@ function AddExpenseForm({ onAdd, defaultDate }) {
   )
 }
 
-function ExpenseList({ expenses, onDelete }) {
-  const sorted = [...expenses].sort((a, b) => a.date.localeCompare(b.date))
+function ExpenseList({ expenses, onDelete, onEdit }) {
+  const [search, setSearch] = useState('')
+  const [filterCategory, setFilterCategory] = useState('All')
+  const [editingId, setEditingId] = useState(null)
+  const [editDraft, setEditDraft] = useState({})
+
+  function startEdit(e) {
+    setEditingId(e.id)
+    setEditDraft({ date: e.date, description: e.description, category: e.category, amount: e.amount })
+  }
+
+  function cancelEdit() {
+    setEditingId(null)
+    setEditDraft({})
+  }
+
+  function saveEdit(id) {
+    const amount = parseFloat(editDraft.amount)
+    if (!editDraft.date || !editDraft.description || isNaN(amount) || amount <= 0) return
+    onEdit(id, { ...editDraft, amount })
+    setEditingId(null)
+    setEditDraft({})
+  }
+
+  const filtered = [...expenses]
+    .filter(e => filterCategory === 'All' || e.category === filterCategory)
+    .filter(e => e.description.toLowerCase().includes(search.toLowerCase()))
+    .sort((a, b) => a.date.localeCompare(b.date))
 
   return (
     <div className="expense-list card">
       <h2>Expenses</h2>
-      {sorted.length === 0 ? (
-        <p className="empty">No expenses this month.</p>
+      <div className="list-filters">
+        <input
+          type="search"
+          className="filter-search"
+          placeholder="Search descriptions…"
+          value={search}
+          onChange={e => setSearch(e.target.value)}
+        />
+        <select
+          className="filter-category"
+          value={filterCategory}
+          onChange={e => setFilterCategory(e.target.value)}
+        >
+          <option value="All">All categories</option>
+          {CATEGORIES.map(c => <option key={c}>{c}</option>)}
+        </select>
+      </div>
+      {filtered.length === 0 ? (
+        <p className="empty">{expenses.length === 0 ? 'No expenses this month.' : 'No matching expenses.'}</p>
       ) : (
         <table>
           <thead>
@@ -147,13 +233,41 @@ function ExpenseList({ expenses, onDelete }) {
             </tr>
           </thead>
           <tbody>
-            {sorted.map(e => (
+            {filtered.map(e => editingId === e.id ? (
+              <tr key={e.id} className="editing-row">
+                <td>
+                  <input type="date" value={editDraft.date}
+                    onChange={ev => setEditDraft(d => ({ ...d, date: ev.target.value }))} />
+                </td>
+                <td>
+                  <input type="text" value={editDraft.description}
+                    onChange={ev => setEditDraft(d => ({ ...d, description: ev.target.value }))} />
+                </td>
+                <td>
+                  <select value={editDraft.category}
+                    onChange={ev => setEditDraft(d => ({ ...d, category: ev.target.value }))}>
+                    {CATEGORIES.map(c => <option key={c}>{c}</option>)}
+                  </select>
+                </td>
+                <td>
+                  <input type="number" min="0.01" step="0.01" value={editDraft.amount}
+                    onChange={ev => setEditDraft(d => ({ ...d, amount: ev.target.value }))} />
+                </td>
+                <td className="row-actions">
+                  <button className="save-btn" onClick={() => saveEdit(e.id)}>&#10003;</button>
+                  <button className="cancel-btn" onClick={cancelEdit}>&#10005;</button>
+                </td>
+              </tr>
+            ) : (
               <tr key={e.id}>
                 <td>{new Date(e.date + 'T00:00:00').toLocaleDateString('default', { month: 'short', day: 'numeric' })}</td>
                 <td>{e.description}</td>
                 <td><span className="badge">{e.category}</span></td>
                 <td className="amount-cell">{e.amount.toFixed(2)} kr</td>
-                <td><button className="delete-btn" onClick={() => onDelete(e.id)}>×</button></td>
+                <td className="row-actions">
+                  <button className="edit-btn" onClick={() => startEdit(e)}>&#9998;</button>
+                  <button className="delete-btn" onClick={() => onDelete(e.id)}>&#215;</button>
+                </td>
               </tr>
             ))}
           </tbody>
@@ -210,8 +324,7 @@ export default function App() {
 
   async function handleAdd(expense) {
     if (guestMode) {
-      const newExpense = { ...expense, id: crypto.randomUUID() }
-      setExpenses(prev => [...prev, newExpense])
+      setExpenses(prev => [...prev, { ...expense, id: crypto.randomUUID() }])
       const d = new Date(expense.date + 'T00:00:00')
       setCurrentMonth({ year: d.getFullYear(), month: d.getMonth() })
       return
@@ -237,16 +350,48 @@ export default function App() {
     setExpenses(prev => prev.filter(e => e.id !== id))
   }
 
+  async function handleEdit(id, updates) {
+    if (guestMode) {
+      setExpenses(prev => prev.map(e => e.id === id ? { ...e, ...updates } : e))
+      return
+    }
+    const { data, error } = await supabase
+      .from('expenses')
+      .update(updates)
+      .eq('id', id)
+      .select()
+      .single()
+    if (error) { console.error(error); return }
+    setExpenses(prev => prev.map(e => e.id === id ? data : e))
+  }
+
   const monthExpenses = expenses.filter(e => {
     const d = new Date(e.date + 'T00:00:00')
     return d.getFullYear() === currentMonth.year && d.getMonth() === currentMonth.month
   })
 
+  const chartData = useMemo(() => {
+    const now = new Date()
+    return Array.from({ length: 6 }, (_, i) => {
+      const d = new Date(now.getFullYear(), now.getMonth() - 5 + i)
+      const year = d.getFullYear()
+      const month = d.getMonth()
+      const label = d.toLocaleString('default', { month: 'short' })
+      const total = expenses
+        .filter(e => {
+          const ed = new Date(e.date + 'T00:00:00')
+          return ed.getFullYear() === year && ed.getMonth() === month
+        })
+        .reduce((sum, e) => sum + e.amount, 0)
+      const isCurrent = year === now.getFullYear() && month === now.getMonth()
+      return { label, total, isCurrent }
+    })
+  }, [expenses])
+
   const defaultDate = new Date(currentMonth.year, currentMonth.month, new Date().getDate())
     .toISOString().split('T')[0]
 
   if (authLoading) return null
-
   if (!session && !guestMode) return <Auth onContinueAsGuest={() => setGuestMode(true)} />
 
   return (
@@ -263,13 +408,14 @@ export default function App() {
           <button className="signout-btn" onClick={() => supabase.auth.signOut()}>Sign out</button>
         )}
       </div>
+      <SpendingChart data={chartData} />
       <div className="layout">
         <aside>
           <Summary expenses={monthExpenses} />
         </aside>
         <main>
           <AddExpenseForm onAdd={handleAdd} defaultDate={defaultDate} />
-          <ExpenseList expenses={monthExpenses} onDelete={handleDelete} />
+          <ExpenseList expenses={monthExpenses} onDelete={handleDelete} onEdit={handleEdit} />
         </main>
       </div>
     </div>

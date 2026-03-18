@@ -106,6 +106,36 @@
   }
 }
 
+/* Spending chart */
+.spending-chart {
+  margin-bottom: 24px;
+
+  h2 {
+    margin-bottom: 16px;
+  }
+}
+
+.chart-tooltip {
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 8px 12px;
+  box-shadow: var(--shadow);
+}
+
+.chart-tooltip-label {
+  font-size: 12px;
+  color: var(--text);
+  margin: 0 0 2px;
+}
+
+.chart-tooltip-value {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--text-h);
+  margin: 0;
+}
+
 /* Two-column layout */
 .layout {
   display: grid;
@@ -331,6 +361,87 @@ tbody tr:hover td {
     color: #e53e3e;
   }
 }
+
+/* Expense list filters */
+.list-filters {
+  display: flex;
+  gap: 10px;
+  margin-bottom: 16px;
+  flex-wrap: wrap;
+}
+
+.filter-search {
+  flex: 1;
+  min-width: 160px;
+}
+
+.filter-category {
+  flex: 0 0 auto;
+  min-width: 160px;
+}
+
+/* Row actions */
+.row-actions {
+  display: flex;
+  gap: 2px;
+  justify-content: flex-end;
+  white-space: nowrap;
+}
+
+.edit-btn {
+  background: none;
+  border: none;
+  color: var(--text);
+  cursor: pointer;
+  font-size: 15px;
+  padding: 2px 6px;
+  border-radius: 4px;
+  opacity: 0.45;
+  transition: opacity 0.15s, color 0.15s;
+
+  &:hover {
+    opacity: 1;
+    color: var(--accent);
+  }
+}
+
+.save-btn {
+  background: none;
+  border: none;
+  color: var(--accent);
+  cursor: pointer;
+  font-size: 15px;
+  padding: 2px 6px;
+  border-radius: 4px;
+  transition: opacity 0.15s;
+
+  &:hover { opacity: 0.75; }
+}
+
+.cancel-btn {
+  background: none;
+  border: none;
+  color: var(--text);
+  cursor: pointer;
+  font-size: 15px;
+  padding: 2px 6px;
+  border-radius: 4px;
+  transition: opacity 0.15s;
+
+  &:hover { opacity: 0.75; }
+}
+
+/* Inline edit row */
+.editing-row td input,
+.editing-row td select {
+  font-size: 13px;
+  padding: 4px 6px;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.editing-row td:first-child input { min-width: 110px; }
+.editing-row td:nth-child(4) input { max-width: 80px; }
 
 .empty {
   color: var(--text);
