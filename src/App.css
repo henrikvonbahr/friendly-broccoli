@@ -829,6 +829,224 @@ tbody tr:hover td {
   }
 }
 
+/* ── Budgets section ─────────────────────────────────────── */
+.budgets-wrapper {
+  margin-top: 24px;
+}
+
+.budgets-section {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+
+/* Monthly outlook card */
+.budget-outlook h2 {
+  margin-bottom: 16px;
+}
+
+.outlook-stats {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 12px;
+  margin-bottom: 16px;
+}
+
+.outlook-stat {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.outlook-label {
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.6px;
+  color: var(--text);
+}
+
+.outlook-value {
+  font-size: 22px;
+  font-weight: 700;
+  color: var(--text-h);
+  letter-spacing: -0.5px;
+
+  @media (max-width: 400px) {
+    font-size: 18px;
+  }
+}
+
+.outlook-bar-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 16px;
+}
+
+.outlook-bar-track {
+  flex: 1;
+  height: 8px;
+  background: var(--accent-bg);
+  border-radius: 99px;
+  overflow: hidden;
+}
+
+.outlook-bar-fill {
+  height: 100%;
+  border-radius: 99px;
+  transition: width 0.4s ease, background 0.3s ease;
+}
+
+.outlook-bar-label {
+  font-size: 12px;
+  color: var(--text);
+  white-space: nowrap;
+}
+
+.outlook-projection {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding-top: 14px;
+  border-top: 1px solid var(--border);
+}
+
+.projection-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  font-size: 14px;
+  color: var(--text);
+}
+
+.projection-value {
+  font-weight: 600;
+  color: var(--text-h);
+}
+
+.stat-over {
+  color: #ef4444 !important;
+}
+
+.stat-remaining {
+  color: #10b981;
+}
+
+/* Category budgets card */
+.budget-categories-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 16px;
+
+  h2 {
+    margin: 0;
+  }
+}
+
+.budget-hint {
+  font-size: 12px;
+  color: var(--text);
+  opacity: 0.6;
+}
+
+.budget-cat-list {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.budget-cat-row {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.budget-cat-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 8px;
+}
+
+.budget-cat-name {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--text-h);
+}
+
+.budget-amount-btn {
+  background: none;
+  border: 1px dashed var(--border);
+  border-radius: 6px;
+  color: var(--text-h);
+  cursor: pointer;
+  font-size: 14px;
+  font-weight: 600;
+  font-family: var(--sans);
+  padding: 4px 10px;
+  white-space: nowrap;
+  transition: border-color 0.15s, background 0.15s, color 0.15s;
+
+  &:hover {
+    border-color: var(--accent-border);
+    background: var(--accent-bg);
+    color: var(--accent);
+  }
+}
+
+.budget-edit-group {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.budget-edit-input {
+  width: 90px;
+  font-size: 14px;
+  font-weight: 600;
+  padding: 4px 8px;
+}
+
+.budget-edit-unit {
+  font-size: 14px;
+  color: var(--text);
+  white-space: nowrap;
+}
+
+.budget-cat-stats {
+  display: flex;
+  gap: 14px;
+  flex-wrap: wrap;
+}
+
+.budget-stat {
+  font-size: 12px;
+  color: var(--text);
+
+  strong {
+    color: var(--text-h);
+  }
+}
+
+.budget-stat-avg {
+  opacity: 0.75;
+}
+
+.trend-up {
+  color: #ef4444;
+  font-weight: 600;
+}
+
+.trend-down {
+  color: #10b981;
+  font-weight: 600;
+}
+
 /* ── Mobile expense list ─────────────────────────────────── */
 @media (max-width: 640px) {
   /* Disable hover highlight on touch */

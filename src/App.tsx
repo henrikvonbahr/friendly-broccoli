@@ -837,7 +837,255 @@ function InsightsCard({ summary }: InsightsCardProps) {
   )
 }
 
-type MobileTab = 'overview' | 'expenses' | 'income'
+interface BudgetCategoryRowProps {
+  category: string
+  color: string
+  currentSpending: number
+  prevAvg: number
+  budget?: number
+  onSetBudget: (amount: number) => void
+}
+
+function BudgetCategoryRow({ category, color, currentSpending, prevAvg, budget, onSetBudget }: BudgetCategoryRowProps) {
+  const [editing, setEditing] = useState(false)
+  const [draft, setDraft] = useState('')
+
+  const hasBudget = budget !== undefined && budget > 0
+  const pct = hasBudget ? Math.min((currentSpending / budget) * 100, 100) : 0
+  const overBudget = hasBudget && currentSpending > budget
+  const nearBudget = hasBudget && !overBudget && pct >= 80
+  const barColor = overBudget ? '#ef4444' : nearBudget ? '#f59e0b' : color
+  const remaining = hasBudget ? budget - currentSpending : null
+  const trendPct = prevAvg > 0 && currentSpending > 0 ? ((currentSpending - prevAvg) / prevAvg) * 100 : null
+
+  function startEdit() {
+    setDraft(hasBudget ? String(Math.round(budget!)) : prevAvg > 0 ? String(Math.round(prevAvg)) : '')
+    setEditing(true)
+  }
+
+  function commitEdit() {
+    const val = parseFloat(draft)
+    if (!isNaN(val) && val > 0) onSetBudget(val)
+    setEditing(false)
+  }
+
+  return (
+    <div className="budget-cat-row">
+      <div className="budget-cat-header">
+        <span className="budget-cat-name">
+          <span className="category-dot" style={{ background: color }} />
+          {category}
+        </span>
+        {editing ? (
+          <div className="budget-edit-group">
+            <input
+              autoFocus
+              type="number"
+              min="1"
+              step="100"
+              value={draft}
+              className="budget-edit-input"
+              onChange={e => setDraft(e.target.value)}
+              onBlur={commitEdit}
+              onKeyDown={e => {
+                if (e.key === 'Enter') commitEdit()
+                if (e.key === 'Escape') setEditing(false)
+              }}
+            />
+            <span className="budget-edit-unit">kr</span>
+          </div>
+        ) : (
+          <button className="budget-amount-btn" onClick={startEdit}>
+            {hasBudget ? `${Math.round(budget!).toLocaleString('no')} kr` : '+ Set budget'}
+          </button>
+        )}
+      </div>
+      <div className="budget-cat-stats">
+        <span className="budget-stat">
+          Spent: <strong className={overBudget ? 'stat-over' : ''}>{Math.round(currentSpending).toLocaleString('no')} kr</strong>
+        </span>
+        {prevAvg > 0 && (
+          <span className="budget-stat budget-stat-avg">
+            3mo avg: {Math.round(prevAvg).toLocaleString('no')} kr
+            {trendPct !== null && Math.abs(trendPct) > 10 && (
+              <span className={trendPct > 0 ? 'trend-up' : 'trend-down'}>
+                {trendPct > 0 ? ' ↑' : ' ↓'}{Math.abs(trendPct).toFixed(0)}%
+              </span>
+            )}
+          </span>
+        )}
+        {remaining !== null && (
+          <span className={`budget-stat ${overBudget ? 'stat-over' : 'stat-remaining'}`}>
+            {overBudget
+              ? `${Math.round(Math.abs(remaining)).toLocaleString('no')} kr over`
+              : `${Math.round(remaining).toLocaleString('no')} kr left`}
+          </span>
+        )}
+      </div>
+      {hasBudget && (
+        <div className="bar-track">
+          <div className="bar-fill" style={{ width: `${pct.toFixed(1)}%`, background: barColor }} />
+        </div>
+      )}
+    </div>
+  )
+}
+
+interface BudgetsSectionProps {
+  expenses: Expense[]
+  monthIncomes: Income[]
+  budgets: Record<string, number>
+  onSetBudget: (category: string, amount: number) => void
+  currentMonth: MonthState
+}
+
+function BudgetsSection({ expenses, monthIncomes, budgets, onSetBudget, currentMonth }: BudgetsSectionProps) {
+  const monthExpenses = useMemo(() => expenses.filter(e => {
+    const d = new Date(e.date + 'T00:00:00')
+    return d.getFullYear() === currentMonth.year && d.getMonth() === currentMonth.month
+  }), [expenses, currentMonth])
+
+  const currentSpendingByCategory = useMemo(() => monthExpenses.reduce<Record<string, number>>((acc, e) => {
+    acc[e.category] = (acc[e.category] ?? 0) + e.amount
+    return acc
+  }, {}), [monthExpenses])
+
+  const prevMonthsAvg = useMemo(() => {
+    const result: Record<string, number> = {}
+    for (let i = 1; i <= 3; i++) {
+      const d = new Date(currentMonth.year, currentMonth.month - i)
+      const year = d.getFullYear()
+      const month = d.getMonth()
+      expenses
+        .filter(e => {
+          const ed = new Date(e.date + 'T00:00:00')
+          return ed.getFullYear() === year && ed.getMonth() === month
+        })
+        .forEach(e => {
+          result[e.category] = (result[e.category] ?? 0) + e.amount / 3
+        })
+    }
+    return result
+  }, [expenses, currentMonth])
+
+  const totalBudgeted = Object.values(budgets).reduce((sum, v) => sum + v, 0)
+  const totalIncome = monthIncomes.reduce((sum, i) => sum + i.amount, 0)
+  const totalSpent = monthExpenses.reduce((sum, e) => sum + e.amount, 0)
+  const buffer = totalBudgeted > 0 && totalIncome > 0 ? totalIncome - totalBudgeted : null
+  const budgetPct = totalIncome > 0 && totalBudgeted > 0 ? Math.min((totalBudgeted / totalIncome) * 100, 100) : 0
+
+  const today = new Date()
+  const isCurrentMonth = currentMonth.year === today.getFullYear() && currentMonth.month === today.getMonth()
+  const dayOfMonth = isCurrentMonth ? today.getDate() : new Date(currentMonth.year, currentMonth.month + 1, 0).getDate()
+  const daysInMonth = new Date(currentMonth.year, currentMonth.month + 1, 0).getDate()
+  const projectedSpending = isCurrentMonth && dayOfMonth > 0 && totalSpent > 0
+    ? Math.round((totalSpent / dayOfMonth) * daysInMonth)
+    : null
+  const budgetRemaining = totalBudgeted > 0 ? totalBudgeted - totalSpent : null
+
+  const sortedCategories = [...CATEGORIES].sort((a, b) => {
+    const aActive = (currentSpendingByCategory[a] ?? 0) > 0 || (budgets[a] ?? 0) > 0
+    const bActive = (currentSpendingByCategory[b] ?? 0) > 0 || (budgets[b] ?? 0) > 0
+    if (aActive && !bActive) return -1
+    if (!aActive && bActive) return 1
+    return 0
+  })
+
+  const showOutlook = totalBudgeted > 0 || totalIncome > 0
+
+  return (
+    <div className="budgets-section">
+      {showOutlook && (
+        <div className="budget-outlook card">
+          <h2>Monthly Outlook</h2>
+          <div className="outlook-stats">
+            <div className="outlook-stat">
+              <span className="outlook-label">Income</span>
+              <span className="outlook-value income-total">
+                {totalIncome > 0 ? `${Math.round(totalIncome).toLocaleString('no')} kr` : '—'}
+              </span>
+            </div>
+            <div className="outlook-stat">
+              <span className="outlook-label">Budgeted</span>
+              <span className="outlook-value">
+                {totalBudgeted > 0 ? `${Math.round(totalBudgeted).toLocaleString('no')} kr` : '—'}
+              </span>
+            </div>
+            <div className="outlook-stat">
+              <span className="outlook-label">Buffer</span>
+              <span className={`outlook-value ${buffer === null ? '' : buffer >= 0 ? 'net-positive' : 'net-negative'}`}>
+                {buffer !== null
+                  ? `${buffer >= 0 ? '+' : ''}${Math.round(buffer).toLocaleString('no')} kr`
+                  : '—'}
+              </span>
+            </div>
+          </div>
+          {totalBudgeted > 0 && totalIncome > 0 && (
+            <div className="outlook-bar-row">
+              <div className="outlook-bar-track">
+                <div
+                  className="outlook-bar-fill"
+                  style={{
+                    width: `${budgetPct.toFixed(1)}%`,
+                    background: budgetPct > 100 ? '#ef4444' : budgetPct > 85 ? '#f59e0b' : '#10b981',
+                  }}
+                />
+              </div>
+              <span className="outlook-bar-label">{budgetPct.toFixed(0)}% of income budgeted</span>
+            </div>
+          )}
+          {isCurrentMonth && totalSpent > 0 && (
+            <div className="outlook-projection">
+              <div className="projection-row">
+                <span>Spent so far ({dayOfMonth} / {daysInMonth} days)</span>
+                <span className="projection-value">{Math.round(totalSpent).toLocaleString('no')} kr</span>
+              </div>
+              {projectedSpending !== null && (
+                <div className="projection-row">
+                  <span>Projected end of month</span>
+                  <span className={`projection-value ${totalBudgeted > 0 && projectedSpending > totalBudgeted ? 'stat-over' : ''}`}>
+                    ~{projectedSpending.toLocaleString('no')} kr
+                  </span>
+                </div>
+              )}
+              {budgetRemaining !== null && (
+                <div className="projection-row">
+                  <span>Budget remaining</span>
+                  <span className={`projection-value ${budgetRemaining < 0 ? 'stat-over' : 'stat-remaining'}`}>
+                    {budgetRemaining >= 0
+                      ? `${Math.round(budgetRemaining).toLocaleString('no')} kr`
+                      : `−${Math.round(Math.abs(budgetRemaining)).toLocaleString('no')} kr`}
+                  </span>
+                </div>
+              )}
+            </div>
+          )}
+        </div>
+      )}
+      <div className="budget-categories card">
+        <div className="budget-categories-header">
+          <h2>Category Budgets</h2>
+          <span className="budget-hint">Click to edit</span>
+        </div>
+        <div className="budget-cat-list">
+          {sortedCategories.map(cat => (
+            <BudgetCategoryRow
+              key={cat}
+              category={cat}
+              color={CATEGORY_COLORS[cat] ?? '#94a3b8'}
+              currentSpending={currentSpendingByCategory[cat] ?? 0}
+              prevAvg={prevMonthsAvg[cat] ?? 0}
+              budget={budgets[cat]}
+              onSetBudget={(amt) => onSetBudget(cat, amt)}
+            />
+          ))}
+        </div>
+      </div>
+    </div>
+  )
+}
+
+type MobileTab = 'overview' | 'expenses' | 'income' | 'budgets'
 
 function MobileTabBar({ active, onChange }: { active: MobileTab; onChange: (t: MobileTab) => void }) {
   return (
@@ -850,6 +1098,9 @@ function MobileTabBar({ active, onChange }: { active: MobileTab; onChange: (t: M
       </button>
       <button className={`tab-btn${active === 'income' ? ' tab-active' : ''}`} onClick={() => onChange('income')}>
         Income
+      </button>
+      <button className={`tab-btn${active === 'budgets' ? ' tab-active' : ''}`} onClick={() => onChange('budgets')}>
+        Budgets
       </button>
     </nav>
   )
@@ -1112,6 +1363,15 @@ export default function App() {
             <IncomeList incomes={monthIncomes} onDelete={handleDeleteIncome} onEdit={handleEditIncome} />
           </div>
         </main>
+      </div>
+      <div className={`budgets-wrapper${activeTab !== 'budgets' ? ' mobile-hidden' : ''}`}>
+        <BudgetsSection
+          expenses={expenses}
+          monthIncomes={monthIncomes}
+          budgets={budgets}
+          onSetBudget={setBudgetForCategory}
+          currentMonth={currentMonth}
+        />
       </div>
       <MobileTabBar active={activeTab} onChange={setActiveTab} />
     </div>
