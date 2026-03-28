@@ -54,11 +54,11 @@ interface ChartEntry {
   isCurrent: boolean
 }
 
-const CATEGORIES = ['Groceries', 'Dining', 'Drinks', 'Transport', 'Housing', 'Entertainment', 'Health', 'Clothes', 'Shopping', 'Savings', 'Other']
+const CATEGORIES = ['Groceries', 'Food', 'Drinks', 'Transport', 'Housing', 'Entertainment', 'Health', 'Clothes', 'Shopping', 'Savings', 'Other']
 
 const CATEGORY_COLORS: Record<string, string> = {
   Groceries:     '#22c55e',
-  Dining:        '#f97316',
+  Food:          '#f97316',
   Drinks:        '#06b6d4',
   Transport:     '#3b82f6',
   Housing:       '#8b5cf6',
@@ -171,6 +171,30 @@ function CategoryBar({ category, amount, max, color, budget, onSetBudget }: Cate
       </div>
       <div className="bar-track">
         <div className="bar-fill" style={{ width: `${pct.toFixed(1)}%`, background: barColor }} />
+      </div>
+    </div>
+  )
+}
+
+function BalanceCard({ totalIncome, totalExpenses }: { totalIncome: number; totalExpenses: number }) {
+  const remaining = totalIncome - totalExpenses
+  const pct = totalIncome > 0 ? Math.min((totalExpenses / totalIncome) * 100, 100) : 0
+  const isOver = remaining < 0
+  const isWarning = !isOver && pct >= 80
+  const barColor = isOver ? '#ef4444' : isWarning ? '#f59e0b' : '#4f7c62'
+
+  return (
+    <div className="balance-card card">
+      <span className="balance-label">Remaining this month</span>
+      <span className={`balance-amount${isOver ? ' balance-over' : ''}`}>
+        {isOver ? '−' : ''}{Math.abs(remaining).toFixed(0)} kr
+      </span>
+      <div className="balance-bar-track">
+        <div className="balance-bar-fill" style={{ width: `${pct.toFixed(1)}%`, background: barColor }} />
+      </div>
+      <div className="balance-meta">
+        <span>{totalExpenses.toFixed(0)} kr spent</span>
+        <span>{totalIncome.toFixed(0)} kr income</span>
       </div>
     </div>
   )
@@ -778,12 +802,14 @@ function ExpenseList({ expenses, onDelete, onEdit }: ExpenseListProps) {
   const [editingId, setEditingId] = useState<string | null>(null)
   const [editDraft, setEditDraft] = useState<EditDraft>({ date: '', description: '', category: '', amount: '', tags: '', split_count: null })
   const [swipedId, setSwipedId] = useState<string | null>(null)
+  const [swipedEditId, setSwipedEditId] = useState<string | null>(null)
   const touchStartX = useRef<number | null>(null)
   const touchItemId = useRef<string | null>(null)
 
   function startEdit(e: Expense) {
     setEditingId(e.id)
     setSwipedId(null)
+    setSwipedEditId(null)
     setEditDraft({ date: e.date, description: e.description, category: e.category, amount: e.amount, tags: (e.tags ?? []).join(', '), split_count: e.split_count ?? null })
   }
 
@@ -805,13 +831,17 @@ function ExpenseList({ expenses, onDelete, onEdit }: ExpenseListProps) {
     touchStartX.current = clientX
     touchItemId.current = id
     if (swipedId && swipedId !== id) setSwipedId(null)
+    if (swipedEditId && swipedEditId !== id) setSwipedEditId(null)
   }
 
   function onTouchMove(clientX: number) {
     if (touchStartX.current === null || touchItemId.current === null) return
     const dx = clientX - touchStartX.current
-    if (dx < -50) setSwipedId(touchItemId.current)
-    else if (dx > 20 && swipedId === touchItemId.current) setSwipedId(null)
+    const id = touchItemId.current
+    if (dx < -50) { setSwipedId(id); setSwipedEditId(null) }
+    else if (dx > 50) { setSwipedEditId(id); setSwipedId(null) }
+    else if (dx > 20 && swipedId === id) setSwipedId(null)
+    else if (dx < -20 && swipedEditId === id) setSwipedEditId(null)
   }
 
   function onTouchEnd() {
@@ -916,11 +946,11 @@ function ExpenseList({ expenses, onDelete, onEdit }: ExpenseListProps) {
             ) : (
               <tr
                 key={e.id}
-                className={swipedId === e.id ? 'row-swiped' : ''}
+                className={swipedId === e.id ? 'row-swiped' : swipedEditId === e.id ? 'row-swiped-edit' : ''}
                 onTouchStart={ev => onTouchStart(e.id, ev.touches[0].clientX)}
                 onTouchMove={ev => onTouchMove(ev.touches[0].clientX)}
                 onTouchEnd={onTouchEnd}
-                onClick={() => { if (swipedId === e.id) setSwipedId(null) }}
+                onClick={() => { if (swipedId === e.id) setSwipedId(null); if (swipedEditId === e.id) setSwipedEditId(null) }}
               >
                 <td>{new Date(e.date + 'T00:00:00').toLocaleDateString('default', { month: 'short', day: 'numeric' })}</td>
                 <td>
@@ -956,6 +986,14 @@ function ExpenseList({ expenses, onDelete, onEdit }: ExpenseListProps) {
                     Delete
                   </button>
                 </td>
+                <td className="swipe-edit-cell">
+                  <button onClick={ev => { ev.stopPropagation(); startEdit(e) }} aria-label="Edit">
+                    <svg viewBox="0 0 20 20" fill="currentColor" width="22" height="22">
+                      <path d="M13.586 3.586a2 2 0 112.828 2.828l-.793.793-2.828-2.828.793-.793zM11.379 5.793L3 14.172V17h2.828l8.38-8.379-2.83-2.828z" />
+                    </svg>
+                    Edit
+                  </button>
+                </td>
               </tr>
             ))}
           </tbody>
@@ -985,12 +1023,14 @@ function IncomeList({ incomes, onDelete, onEdit }: IncomeListProps) {
   const [editingId, setEditingId] = useState<string | null>(null)
   const [editDraft, setEditDraft] = useState<IncomeEditDraft>({ date: '', description: '', source: '', amount: '' })
   const [swipedId, setSwipedId] = useState<string | null>(null)
+  const [swipedEditId, setSwipedEditId] = useState<string | null>(null)
   const touchStartX = useRef<number | null>(null)
   const touchItemId = useRef<string | null>(null)
 
   function startEdit(inc: Income) {
     setEditingId(inc.id)
     setSwipedId(null)
+    setSwipedEditId(null)
     setEditDraft({ date: inc.date, description: inc.description, source: inc.source, amount: inc.amount })
   }
 
@@ -1011,13 +1051,17 @@ function IncomeList({ incomes, onDelete, onEdit }: IncomeListProps) {
     touchStartX.current = clientX
     touchItemId.current = id
     if (swipedId && swipedId !== id) setSwipedId(null)
+    if (swipedEditId && swipedEditId !== id) setSwipedEditId(null)
   }
 
   function onTouchMove(clientX: number) {
     if (touchStartX.current === null || touchItemId.current === null) return
     const dx = clientX - touchStartX.current
-    if (dx < -50) setSwipedId(touchItemId.current)
-    else if (dx > 20 && swipedId === touchItemId.current) setSwipedId(null)
+    const id = touchItemId.current
+    if (dx < -50) { setSwipedId(id); setSwipedEditId(null) }
+    else if (dx > 50) { setSwipedEditId(id); setSwipedId(null) }
+    else if (dx > 20 && swipedId === id) setSwipedId(null)
+    else if (dx < -20 && swipedEditId === id) setSwipedEditId(null)
   }
 
   function onTouchEnd() {
@@ -1099,11 +1143,11 @@ function IncomeList({ incomes, onDelete, onEdit }: IncomeListProps) {
             ) : (
               <tr
                 key={inc.id}
-                className={swipedId === inc.id ? 'row-swiped' : ''}
+                className={swipedId === inc.id ? 'row-swiped' : swipedEditId === inc.id ? 'row-swiped-edit' : ''}
                 onTouchStart={ev => onTouchStart(inc.id, ev.touches[0].clientX)}
                 onTouchMove={ev => onTouchMove(ev.touches[0].clientX)}
                 onTouchEnd={onTouchEnd}
-                onClick={() => { if (swipedId === inc.id) setSwipedId(null) }}
+                onClick={() => { if (swipedId === inc.id) setSwipedId(null); if (swipedEditId === inc.id) setSwipedEditId(null) }}
               >
                 <td>{new Date(inc.date + 'T00:00:00').toLocaleDateString('default', { month: 'short', day: 'numeric' })}</td>
                 <td>{inc.description}</td>
@@ -1125,6 +1169,14 @@ function IncomeList({ incomes, onDelete, onEdit }: IncomeListProps) {
                       <path fillRule="evenodd" d="M9 2a1 1 0 00-.894.553L7.382 4H4a1 1 0 000 2v10a2 2 0 002 2h8a2 2 0 002-2V6a1 1 0 100-2h-3.382l-.724-1.447A1 1 0 0011 2H9zM7 8a1 1 0 012 0v6a1 1 0 11-2 0V8zm5-1a1 1 0 00-1 1v6a1 1 0 102 0V8a1 1 0 00-1-1z" clipRule="evenodd" />
                     </svg>
                     Delete
+                  </button>
+                </td>
+                <td className="swipe-edit-cell">
+                  <button onClick={ev => { ev.stopPropagation(); startEdit(inc) }} aria-label="Edit">
+                    <svg viewBox="0 0 20 20" fill="currentColor" width="22" height="22">
+                      <path d="M13.586 3.586a2 2 0 112.828 2.828l-.793.793-2.828-2.828.793-.793zM11.379 5.793L3 14.172V17h2.828l8.38-8.379-2.83-2.828z" />
+                    </svg>
+                    Edit
                   </button>
                 </td>
               </tr>
@@ -2124,6 +2176,7 @@ export default function App() {
           </div>
           <MonthNav currentMonth={currentMonth} onPrev={prevMonth} onNext={nextMonth} />
           <div className={`content-overview${activeTab !== 'overview' ? ' mobile-hidden' : ''}`}>
+            <BalanceCard totalIncome={totalMonthIncome} totalExpenses={totalMonthExpenses} />
             <div className="overview-kpi-row">
               <div className="kpi-card card">
                 <span className="kpi-label">Monthly Expenses</span>
