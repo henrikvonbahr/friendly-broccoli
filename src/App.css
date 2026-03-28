@@ -1832,6 +1832,257 @@ tbody tr:hover td {
   padding: 4px 12px;
 }
 
+/* ── Spending Trends ─────────────────────────────────────── */
+.trends-card {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+}
+
+.trends-subtitle {
+  font-size: 12px;
+  color: var(--text);
+  opacity: 0.55;
+  margin: 2px 0 12px;
+}
+
+.trends-list {
+  display: flex;
+  flex-direction: column;
+}
+
+.trend-row {
+  display: grid;
+  grid-template-columns: 10px 1fr auto auto auto;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 0;
+  border-bottom: 1px solid var(--border);
+}
+
+.trend-row:last-child {
+  border-bottom: none;
+  padding-bottom: 0;
+}
+
+.trend-dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.trend-cat {
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--text-h);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.trend-amount {
+  font-size: 14px;
+  font-weight: 600;
+  text-align: right;
+  white-space: nowrap;
+  color: var(--text-h);
+}
+
+.trend-change {
+  font-size: 11px;
+  font-weight: 700;
+  padding: 2px 7px;
+  border-radius: 99px;
+  white-space: nowrap;
+  min-width: 40px;
+  text-align: center;
+}
+
+.trend-up {
+  color: #ef4444;
+  background: #ef444418;
+}
+
+.trend-down {
+  color: #10b981;
+  background: #10b98118;
+}
+
+.trend-flat {
+  color: var(--text);
+  opacity: 0.45;
+  background: transparent;
+}
+
+.trend-new {
+  color: #8b5cf6;
+  background: #8b5cf618;
+}
+
+/* ── Year View ───────────────────────────────────────────── */
+.year-view {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+}
+
+.year-table {
+  margin-top: 12px;
+  display: flex;
+  flex-direction: column;
+}
+
+.year-header {
+  display: grid;
+  grid-template-columns: 36px 1fr 2fr 1fr 40px;
+  gap: 8px;
+  align-items: center;
+  padding: 0 8px 8px;
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--text);
+  opacity: 0.5;
+  border-bottom: 1px solid var(--border);
+}
+
+.year-row {
+  display: grid;
+  grid-template-columns: 36px 1fr 2fr 1fr 40px;
+  gap: 8px;
+  align-items: center;
+  padding: 7px 8px;
+  border-bottom: 1px solid var(--border);
+  font-size: 13px;
+  background: transparent;
+  border-left: none;
+  border-right: none;
+  border-top: none;
+  border-radius: 6px;
+  cursor: pointer;
+  width: 100%;
+  text-align: left;
+  color: var(--text);
+  font-family: var(--sans);
+  transition: background 0.15s ease;
+}
+
+.year-row:last-of-type {
+  border-bottom: none;
+}
+
+.year-row:hover {
+  background: var(--accent-bg);
+}
+
+.year-row-selected {
+  background: var(--accent-bg);
+  font-weight: 600;
+}
+
+.year-row-current::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 3px;
+  height: 60%;
+  background: var(--accent);
+  border-radius: 99px;
+}
+
+.year-row-current {
+  position: relative;
+}
+
+.year-row-future {
+  opacity: 0.35;
+}
+
+.year-total-row {
+  display: grid;
+  grid-template-columns: 36px 1fr 2fr 1fr 40px;
+  gap: 8px;
+  align-items: center;
+  padding: 10px 8px 0;
+  font-size: 13px;
+  font-weight: 700;
+  border-top: 2px solid var(--border);
+  margin-top: 2px;
+  color: var(--text-h);
+}
+
+.year-month {
+  font-weight: 500;
+  color: var(--text-h);
+  white-space: nowrap;
+}
+
+.year-income {
+  color: #10b981;
+  font-weight: 500;
+  font-size: 13px;
+}
+
+.year-expense-cell {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  overflow: hidden;
+}
+
+.year-bar-wrap {
+  flex: 1;
+  height: 5px;
+  background: var(--border);
+  border-radius: 99px;
+  overflow: hidden;
+  min-width: 20px;
+}
+
+.year-bar {
+  display: block;
+  height: 100%;
+  background: var(--accent);
+  border-radius: 99px;
+  transition: width 0.3s ease;
+}
+
+.year-expense-val {
+  font-size: 13px;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+.year-net-pos {
+  color: #10b981;
+  font-weight: 600;
+  font-size: 13px;
+}
+
+.year-net-neg {
+  color: #ef4444;
+  font-weight: 600;
+  font-size: 13px;
+}
+
+.year-rate-col {
+  text-align: right;
+}
+
+.year-rate {
+  font-size: 12px;
+  opacity: 0.65;
+}
+
+.year-empty {
+  opacity: 0.25;
+  font-size: 13px;
+}
+
 /* ── Tags ────────────────────────────────────────────────── */
 .tag-chips {
   display: flex;

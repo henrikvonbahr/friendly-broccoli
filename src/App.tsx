@@ -1562,6 +1562,198 @@ function RecurringSection({ recurring, onAdd, onDelete, onToggle }: RecurringSec
   )
 }
 
+function Sparkline({ values, color }: { values: number[], color: string }) {
+  const max = Math.max(...values, 1)
+  const w = 56, h = 28, padX = 2
+  const pts = values.map((v, i) => ({
+    x: padX + (i / Math.max(values.length - 1, 1)) * (w - padX * 2),
+    y: h - 4 - (v / max) * (h - 8),
+  }))
+  const lineD = pts.map((p, i) => `${i === 0 ? 'M' : 'L'}${p.x.toFixed(1)},${p.y.toFixed(1)}`).join(' ')
+  const areaD = `${lineD} L${pts[pts.length - 1].x.toFixed(1)},${h} L${pts[0].x.toFixed(1)},${h} Z`
+  return (
+    <svg width={w} height={h} viewBox={`0 0 ${w} ${h}`} style={{ display: 'block', flexShrink: 0 }}>
+      <path d={areaD} fill={color} opacity={0.18} />
+      <path d={lineD} fill="none" stroke={color} strokeWidth="1.5" strokeLinejoin="round" strokeLinecap="round" />
+    </svg>
+  )
+}
+
+interface SpendingTrendsProps {
+  expenses: Expense[]
+  currentMonth: MonthState
+}
+
+function SpendingTrends({ expenses, currentMonth }: SpendingTrendsProps) {
+  const months = useMemo(() => Array.from({ length: 5 }, (_, i) => {
+    const d = new Date(currentMonth.year, currentMonth.month - 4 + i)
+    return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`
+  }), [currentMonth])
+
+  const currentYM = months[4]
+  const prevYM = months[3]
+
+  const byCategory = useMemo(() => {
+    const result: Record<string, number[]> = {}
+    for (const ym of months) {
+      const monthExp = expenses.filter(e => e.date.startsWith(ym))
+      const cats = new Set(monthExp.map(e => e.category))
+      for (const cat of cats) {
+        if (!result[cat]) result[cat] = new Array(5).fill(0)
+      }
+      monthExp.forEach(e => {
+        if (!result[e.category]) result[e.category] = new Array(5).fill(0)
+        result[e.category][months.indexOf(ym)] += e.amount
+      })
+    }
+    return result
+  }, [expenses, months])
+
+  const categories = Object.keys(byCategory)
+    .filter(cat => byCategory[cat][4] > 0 || byCategory[cat][3] > 0)
+    .sort((a, b) => byCategory[b][4] - byCategory[a][4])
+
+  if (categories.length === 0) return null
+
+  const currentExpenses = expenses.filter(e => e.date.startsWith(currentYM))
+  const prevExpenses = expenses.filter(e => e.date.startsWith(prevYM))
+  const currentByCategory = currentExpenses.reduce<Record<string, number>>((acc, e) => { acc[e.category] = (acc[e.category] ?? 0) + e.amount; return acc }, {})
+  const prevByCategory = prevExpenses.reduce<Record<string, number>>((acc, e) => { acc[e.category] = (acc[e.category] ?? 0) + e.amount; return acc }, {})
+
+  return (
+    <div className="trends-card card">
+      <h2>Spending trends</h2>
+      <p className="trends-subtitle">Per category vs last month, last 5 months</p>
+      <div className="trends-list">
+        {categories.map(cat => {
+          const curr = currentByCategory[cat] ?? 0
+          const prev = prevByCategory[cat] ?? 0
+          const change = prev > 0 ? ((curr - prev) / prev) * 100 : null
+          const color = CATEGORY_COLORS[cat] ?? '#94a3b8'
+          const sparkValues = byCategory[cat]
+          return (
+            <div key={cat} className="trend-row">
+              <span className="trend-dot" style={{ background: color }} />
+              <span className="trend-cat">{cat}</span>
+              <Sparkline values={sparkValues} color={color} />
+              <span className="trend-amount">{curr.toFixed(0)} kr</span>
+              {change !== null ? (
+                <span className={`trend-change${change > 5 ? ' trend-up' : change < -5 ? ' trend-down' : ' trend-flat'}`}>
+                  {change > 5 ? '↑' : change < -5 ? '↓' : '→'}{Math.abs(Math.round(change))}%
+                </span>
+              ) : curr > 0 ? (
+                <span className="trend-change trend-new">new</span>
+              ) : (
+                <span className="trend-change trend-flat">—</span>
+              )}
+            </div>
+          )
+        })}
+      </div>
+    </div>
+  )
+}
+
+interface YearViewProps {
+  expenses: Expense[]
+  incomes: Income[]
+  currentYear: number
+  currentMonth: MonthState
+  onSelectMonth: (m: MonthState) => void
+}
+
+function YearView({ expenses, incomes, currentYear, currentMonth, onSelectMonth }: YearViewProps) {
+  const MONTH_LABELS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec']
+  const now = new Date()
+  const isCurrentYear = currentYear === now.getFullYear()
+
+  const rows = useMemo(() => Array.from({ length: 12 }, (_, month) => {
+    const ym = `${currentYear}-${String(month + 1).padStart(2, '0')}`
+    const mExp = expenses.filter(e => e.date.startsWith(ym)).reduce((s, e) => s + e.amount, 0)
+    const mInc = incomes.filter(i => i.date.startsWith(ym)).reduce((s, i) => s + i.amount, 0)
+    const net = mInc - mExp
+    const rate = mInc > 0 ? Math.round((net / mInc) * 100) : null
+    const hasData = mExp > 0 || mInc > 0
+    return { month, mExp, mInc, net, rate, hasData }
+  }), [expenses, incomes, currentYear])
+
+  const maxExp = Math.max(...rows.map(r => r.mExp), 1)
+  const totalInc = rows.reduce((s, r) => s + r.mInc, 0)
+  const totalExp = rows.reduce((s, r) => s + r.mExp, 0)
+  const totalNet = totalInc - totalExp
+  const totalRate = totalInc > 0 ? Math.round((totalNet / totalInc) * 100) : null
+
+  function fmt(n: number) {
+    if (n >= 10000) return `${(n / 1000).toFixed(0)}k`
+    if (n >= 1000) return `${(n / 1000).toFixed(1)}k`
+    return n.toFixed(0)
+  }
+
+  return (
+    <div className="year-view card">
+      <h2>{currentYear} at a glance</h2>
+      <div className="year-table">
+        <div className="year-header">
+          <span>Month</span>
+          <span>Income</span>
+          <span>Expenses</span>
+          <span>Net</span>
+          <span className="year-rate-col">Rate</span>
+        </div>
+        {rows.map(({ month, mExp, mInc, net, rate, hasData }) => {
+          const isCurrent = isCurrentYear && month === now.getMonth()
+            && currentMonth.year === now.getFullYear() && currentMonth.month === now.getMonth()
+          const isSelected = currentMonth.year === currentYear && currentMonth.month === month
+          const isFuture = isCurrentYear && month > now.getMonth()
+          return (
+            <button
+              key={month}
+              className={`year-row${isSelected ? ' year-row-selected' : ''}${isCurrent ? ' year-row-current' : ''}${isFuture && !hasData ? ' year-row-future' : ''}`}
+              onClick={() => onSelectMonth({ year: currentYear, month })}
+            >
+              <span className="year-month">{MONTH_LABELS[month]}</span>
+              {hasData ? (
+                <>
+                  <span className="year-income">{mInc > 0 ? fmt(mInc) : '—'}</span>
+                  <span className="year-expense-cell">
+                    <span className="year-bar-wrap">
+                      <span className="year-bar" style={{ width: `${(mExp / maxExp * 100).toFixed(1)}%` }} />
+                    </span>
+                    <span className="year-expense-val">{mExp > 0 ? fmt(mExp) : '—'}</span>
+                  </span>
+                  <span className={`year-net${net >= 0 ? ' year-net-pos' : ' year-net-neg'}`}>
+                    {net >= 0 ? '+' : ''}{fmt(Math.abs(net))}
+                  </span>
+                  <span className="year-rate-col year-rate">{rate !== null ? `${rate}%` : '—'}</span>
+                </>
+              ) : (
+                <>
+                  <span className="year-empty">—</span>
+                  <span className="year-empty">—</span>
+                  <span className="year-empty">—</span>
+                  <span className="year-empty">—</span>
+                </>
+              )}
+            </button>
+          )
+        })}
+        <div className="year-total-row">
+          <span className="year-month">Total</span>
+          <span className="year-income">{fmt(totalInc)}</span>
+          <span className="year-expense-cell">
+            <span className="year-bar-wrap"><span className="year-bar" style={{ width: '100%' }} /></span>
+            <span className="year-expense-val">{fmt(totalExp)}</span>
+          </span>
+          <span className={`year-net${totalNet >= 0 ? ' year-net-pos' : ' year-net-neg'}`}>
+            {totalNet >= 0 ? '+' : ''}{fmt(Math.abs(totalNet))}
+          </span>
+          <span className="year-rate-col year-rate">{totalRate !== null ? `${totalRate}%` : '—'}</span>
+        </div>
+      </div>
+    </div>
+  )
+}
+
 interface OverviewStatsCardProps {
   expenses: Expense[]
   incomes: Income[]
@@ -2202,6 +2394,14 @@ export default function App() {
               incomes={incomes}
               budgets={budgets}
               currentMonth={currentMonth}
+            />
+            <SpendingTrends expenses={expenses} currentMonth={currentMonth} />
+            <YearView
+              expenses={expenses}
+              incomes={incomes}
+              currentYear={currentMonth.year}
+              currentMonth={currentMonth}
+              onSelectMonth={setCurrentMonth}
             />
           </div>
           <div className={`layout${activeTab !== 'overview' ? ' layout-full' : ''}`}>
