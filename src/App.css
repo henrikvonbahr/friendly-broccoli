@@ -516,8 +516,37 @@ select {
 }
 
 /* Expense list */
-.expense-list h2 {
+.list-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
   margin-bottom: 16px;
+
+  h2 {
+    margin: 0;
+  }
+}
+
+.sort-btn {
+  background: none;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  color: var(--text);
+  cursor: pointer;
+  font-size: 13px;
+  font-family: var(--sans);
+  padding: 5px 10px;
+  transition: border-color 0.15s, color 0.15s;
+
+  &:hover {
+    border-color: var(--accent-border);
+    color: var(--accent);
+  }
+}
+
+/* swipe-delete-cell — hidden on desktop, revealed on mobile swipe */
+.swipe-delete-cell {
+  display: none;
 }
 
 table {
@@ -1093,6 +1122,68 @@ tbody tr:hover td {
     padding: 12px 0;
     border-bottom: 1px solid var(--border);
     border-radius: 0;
+    position: relative;
+    overflow: hidden;
+  }
+
+  /* Swipe-to-delete */
+  .swipe-delete-cell {
+    display: flex;
+    position: absolute;
+    right: 0;
+    top: 0;
+    bottom: 0;
+    width: 80px;
+    padding: 0 !important;
+    border: none !important;
+    transform: translateX(100%);
+    transition: transform 0.22s ease;
+    z-index: 2;
+
+    button {
+      flex: 1;
+      background: #ef4444;
+      border: none;
+      color: white;
+      cursor: pointer;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 3px;
+      font-size: 11px;
+      font-weight: 600;
+      font-family: var(--sans);
+      padding: 0;
+    }
+  }
+
+  .row-swiped .swipe-delete-cell {
+    transform: translateX(0);
+  }
+
+  /* Slide row content left when swiped */
+  .row-swiped td:not(.swipe-delete-cell) {
+    transform: translateX(-80px);
+    transition: transform 0.22s ease;
+  }
+
+  /* Smooth reset when not swiped */
+  .expense-list tbody tr:not(.row-swiped) td:not(.swipe-delete-cell) {
+    transition: transform 0.22s ease;
+  }
+
+  /* Larger tap targets for edit/delete buttons on mobile */
+  .edit-btn {
+    padding: 8px 10px !important;
+    font-size: 18px !important;
+    opacity: 0.75 !important;
+  }
+
+  .delete-btn {
+    padding: 8px 10px !important;
+    font-size: 18px !important;
+    opacity: 0.75 !important;
   }
 
   .expense-list tbody tr:last-child {
@@ -1219,6 +1310,8 @@ tbody tr:hover td {
     padding: 12px 0;
     border-bottom: 1px solid var(--border);
     border-radius: 0;
+    position: relative;
+    overflow: hidden;
   }
 
   .income-list tbody tr:last-child {

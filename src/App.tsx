@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo } from 'react'
+import { useState, useEffect, useMemo, useRef } from 'react'
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Cell, PieChart, Pie } from 'recharts'
 import type { TooltipContentProps } from 'recharts'
 import type { Session } from '@supabase/supabase-js'
@@ -399,6 +399,10 @@ function AddExpenseForm({ onAdd, defaultDate }: AddExpenseFormProps) {
     amount: '',
   })
 
+  useEffect(() => {
+    setForm(f => ({ ...f, date: defaultDate }))
+  }, [defaultDate])
+
   function set(field: string, value: string) {
     setForm(f => ({ ...f, [field]: value }))
   }
@@ -465,6 +469,10 @@ function AddIncomeForm({ onAdd, defaultDate }: AddIncomeFormProps) {
     source: INCOME_SOURCES[0],
     amount: '',
   })
+
+  useEffect(() => {
+    setForm(f => ({ ...f, date: defaultDate }))
+  }, [defaultDate])
 
   function set(field: string, value: string) {
     setForm(f => ({ ...f, [field]: value }))
@@ -536,11 +544,16 @@ type EditDraft = {
 function ExpenseList({ expenses, onDelete, onEdit }: ExpenseListProps) {
   const [search, setSearch] = useState('')
   const [filterCategory, setFilterCategory] = useState('All')
+  const [sortDesc, setSortDesc] = useState(true)
   const [editingId, setEditingId] = useState<string | null>(null)
   const [editDraft, setEditDraft] = useState<EditDraft>({ date: '', description: '', category: '', amount: '' })
+  const [swipedId, setSwipedId] = useState<string | null>(null)
+  const touchStartX = useRef<number | null>(null)
+  const touchItemId = useRef<string | null>(null)
 
   function startEdit(e: Expense) {
     setEditingId(e.id)
+    setSwipedId(null)
     setEditDraft({ date: e.date, description: e.description, category: e.category, amount: e.amount })
   }
 
@@ -557,14 +570,37 @@ function ExpenseList({ expenses, onDelete, onEdit }: ExpenseListProps) {
     setEditDraft({ date: '', description: '', category: '', amount: '' })
   }
 
+  function onTouchStart(id: string, clientX: number) {
+    touchStartX.current = clientX
+    touchItemId.current = id
+    if (swipedId && swipedId !== id) setSwipedId(null)
+  }
+
+  function onTouchMove(clientX: number) {
+    if (touchStartX.current === null || touchItemId.current === null) return
+    const dx = clientX - touchStartX.current
+    if (dx < -50) setSwipedId(touchItemId.current)
+    else if (dx > 20 && swipedId === touchItemId.current) setSwipedId(null)
+  }
+
+  function onTouchEnd() {
+    touchStartX.current = null
+    touchItemId.current = null
+  }
+
   const filtered = [...expenses]
     .filter(e => filterCategory === 'All' || e.category === filterCategory)
     .filter(e => e.description.toLowerCase().includes(search.toLowerCase()))
-    .sort((a, b) => a.date.localeCompare(b.date))
+    .sort((a, b) => sortDesc ? b.date.localeCompare(a.date) : a.date.localeCompare(b.date))
 
   return (
     <div className="expense-list card">
-      <h2>Expenses</h2>
+      <div className="list-header">
+        <h2>Expenses</h2>
+        <button className="sort-btn" onClick={() => setSortDesc(d => !d)}>
+          {sortDesc ? '↓ Newest' : '↑ Oldest'}
+        </button>
+      </div>
       <div className="list-filters">
         <input
           type="search"
@@ -624,7 +660,14 @@ function ExpenseList({ expenses, onDelete, onEdit }: ExpenseListProps) {
                 </td>
               </tr>
             ) : (
-              <tr key={e.id}>
+              <tr
+                key={e.id}
+                className={swipedId === e.id ? 'row-swiped' : ''}
+                onTouchStart={ev => onTouchStart(e.id, ev.touches[0].clientX)}
+                onTouchMove={ev => onTouchMove(ev.touches[0].clientX)}
+                onTouchEnd={onTouchEnd}
+                onClick={() => { if (swipedId === e.id) setSwipedId(null) }}
+              >
                 <td>{new Date(e.date + 'T00:00:00').toLocaleDateString('default', { month: 'short', day: 'numeric' })}</td>
                 <td>{e.description}</td>
                 <td><span className="badge" style={{
@@ -635,9 +678,17 @@ function ExpenseList({ expenses, onDelete, onEdit }: ExpenseListProps) {
                 <td className="amount-cell">{e.amount.toFixed(2)} kr</td>
                 <td>
                   <div className="row-actions">
-                    <button className="edit-btn" onClick={() => startEdit(e)}>&#9998;</button>
-                    <button className="delete-btn" onClick={() => onDelete(e.id)}>&#215;</button>
+                    <button className="edit-btn" onClick={ev => { ev.stopPropagation(); startEdit(e) }}>&#9998;</button>
+                    <button className="delete-btn" onClick={ev => { ev.stopPropagation(); onDelete(e.id) }}>&#215;</button>
                   </div>
+                </td>
+                <td className="swipe-delete-cell">
+                  <button onClick={ev => { ev.stopPropagation(); onDelete(e.id); setSwipedId(null) }} aria-label="Delete">
+                    <svg viewBox="0 0 20 20" fill="currentColor" width="22" height="22">
+                      <path fillRule="evenodd" d="M9 2a1 1 0 00-.894.553L7.382 4H4a1 1 0 000 2v10a2 2 0 002 2h8a2 2 0 002-2V6a1 1 0 100-2h-3.382l-.724-1.447A1 1 0 0011 2H9zM7 8a1 1 0 012 0v6a1 1 0 11-2 0V8zm5-1a1 1 0 00-1 1v6a1 1 0 102 0V8a1 1 0 00-1-1z" clipRule="evenodd" />
+                    </svg>
+                    Delete
+                  </button>
                 </td>
               </tr>
             ))}
@@ -664,11 +715,16 @@ type IncomeEditDraft = {
 function IncomeList({ incomes, onDelete, onEdit }: IncomeListProps) {
   const [search, setSearch] = useState('')
   const [filterSource, setFilterSource] = useState('All')
+  const [sortDesc, setSortDesc] = useState(true)
   const [editingId, setEditingId] = useState<string | null>(null)
   const [editDraft, setEditDraft] = useState<IncomeEditDraft>({ date: '', description: '', source: '', amount: '' })
+  const [swipedId, setSwipedId] = useState<string | null>(null)
+  const touchStartX = useRef<number | null>(null)
+  const touchItemId = useRef<string | null>(null)
 
   function startEdit(inc: Income) {
     setEditingId(inc.id)
+    setSwipedId(null)
     setEditDraft({ date: inc.date, description: inc.description, source: inc.source, amount: inc.amount })
   }
 
@@ -685,14 +741,37 @@ function IncomeList({ incomes, onDelete, onEdit }: IncomeListProps) {
     setEditDraft({ date: '', description: '', source: '', amount: '' })
   }
 
+  function onTouchStart(id: string, clientX: number) {
+    touchStartX.current = clientX
+    touchItemId.current = id
+    if (swipedId && swipedId !== id) setSwipedId(null)
+  }
+
+  function onTouchMove(clientX: number) {
+    if (touchStartX.current === null || touchItemId.current === null) return
+    const dx = clientX - touchStartX.current
+    if (dx < -50) setSwipedId(touchItemId.current)
+    else if (dx > 20 && swipedId === touchItemId.current) setSwipedId(null)
+  }
+
+  function onTouchEnd() {
+    touchStartX.current = null
+    touchItemId.current = null
+  }
+
   const filtered = [...incomes]
     .filter(inc => filterSource === 'All' || inc.source === filterSource)
     .filter(inc => inc.description.toLowerCase().includes(search.toLowerCase()))
-    .sort((a, b) => a.date.localeCompare(b.date))
+    .sort((a, b) => sortDesc ? b.date.localeCompare(a.date) : a.date.localeCompare(b.date))
 
   return (
     <div className="expense-list income-list card">
-      <h2>Income</h2>
+      <div className="list-header">
+        <h2>Income</h2>
+        <button className="sort-btn" onClick={() => setSortDesc(d => !d)}>
+          {sortDesc ? '↓ Newest' : '↑ Oldest'}
+        </button>
+      </div>
       <div className="list-filters">
         <input
           type="search"
@@ -752,7 +831,14 @@ function IncomeList({ incomes, onDelete, onEdit }: IncomeListProps) {
                 </td>
               </tr>
             ) : (
-              <tr key={inc.id}>
+              <tr
+                key={inc.id}
+                className={swipedId === inc.id ? 'row-swiped' : ''}
+                onTouchStart={ev => onTouchStart(inc.id, ev.touches[0].clientX)}
+                onTouchMove={ev => onTouchMove(ev.touches[0].clientX)}
+                onTouchEnd={onTouchEnd}
+                onClick={() => { if (swipedId === inc.id) setSwipedId(null) }}
+              >
                 <td>{new Date(inc.date + 'T00:00:00').toLocaleDateString('default', { month: 'short', day: 'numeric' })}</td>
                 <td>{inc.description}</td>
                 <td><span className="badge" style={{
@@ -763,9 +849,17 @@ function IncomeList({ incomes, onDelete, onEdit }: IncomeListProps) {
                 <td className="amount-cell income-amount">{inc.amount.toFixed(2)} kr</td>
                 <td>
                   <div className="row-actions">
-                    <button className="edit-btn" onClick={() => startEdit(inc)}>&#9998;</button>
-                    <button className="delete-btn" onClick={() => onDelete(inc.id)}>&#215;</button>
+                    <button className="edit-btn" onClick={ev => { ev.stopPropagation(); startEdit(inc) }}>&#9998;</button>
+                    <button className="delete-btn" onClick={ev => { ev.stopPropagation(); onDelete(inc.id) }}>&#215;</button>
                   </div>
+                </td>
+                <td className="swipe-delete-cell">
+                  <button onClick={ev => { ev.stopPropagation(); onDelete(inc.id); setSwipedId(null) }} aria-label="Delete">
+                    <svg viewBox="0 0 20 20" fill="currentColor" width="22" height="22">
+                      <path fillRule="evenodd" d="M9 2a1 1 0 00-.894.553L7.382 4H4a1 1 0 000 2v10a2 2 0 002 2h8a2 2 0 002-2V6a1 1 0 100-2h-3.382l-.724-1.447A1 1 0 0011 2H9zM7 8a1 1 0 012 0v6a1 1 0 11-2 0V8zm5-1a1 1 0 00-1 1v6a1 1 0 102 0V8a1 1 0 00-1-1z" clipRule="evenodd" />
+                    </svg>
+                    Delete
+                  </button>
                 </td>
               </tr>
             ))}
@@ -1310,8 +1404,10 @@ export default function App() {
     })
   }, [expenses, incomes])
 
-  const defaultDate = new Date(currentMonth.year, currentMonth.month, new Date().getDate())
-    .toISOString().split('T')[0]
+  const now = new Date()
+  const isCurrentMonth = currentMonth.year === now.getFullYear() && currentMonth.month === now.getMonth()
+  const defaultDay = isCurrentMonth ? now.getDate() : 1
+  const defaultDate = `${currentMonth.year}-${String(currentMonth.month + 1).padStart(2, '0')}-${String(defaultDay).padStart(2, '0')}`
 
   const insightsSummary = useMemo<ExpenseSummary>(() => {
     const now = new Date()
