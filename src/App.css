@@ -1,3 +1,139 @@
+/* Hide inactive tab sections on all screen sizes */
+.mobile-hidden {
+  display: none !important;
+}
+
+/* App shell — sidebar + content */
+.app-shell {
+  display: flex;
+  min-height: 100svh;
+}
+
+.app-content {
+  flex: 1;
+  min-width: 0;
+}
+
+/* Sidebar — desktop only */
+.sidebar {
+  display: none;
+}
+
+@media (min-width: 901px) {
+  .sidebar {
+    display: flex;
+    flex-direction: column;
+    width: 220px;
+    flex-shrink: 0;
+    min-height: 100svh;
+    height: 100%;
+    position: sticky;
+    top: 0;
+    max-height: 100svh;
+    overflow-y: auto;
+    border-right: 1px solid var(--border);
+    padding: 24px 14px;
+    box-sizing: border-box;
+  }
+}
+
+.sidebar-top {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 28px;
+}
+
+.sidebar-brand {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 0 4px;
+}
+
+.sidebar-brand-name {
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--text-h);
+  letter-spacing: -0.3px;
+}
+
+.sidebar-nav {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.sidebar-nav-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  padding: 9px 12px;
+  background: none;
+  border: none;
+  border-radius: 10px;
+  color: var(--text);
+  font-size: 14px;
+  font-family: var(--sans);
+  font-weight: 500;
+  cursor: pointer;
+  text-align: left;
+  transition: background 0.15s, color 0.15s;
+
+  svg {
+    flex-shrink: 0;
+    opacity: 0.65;
+    transition: opacity 0.15s;
+  }
+
+  &:hover:not(.sidebar-nav-active) {
+    background: var(--accent-bg);
+    color: var(--text-h);
+  }
+}
+
+.sidebar-nav-active {
+  background: var(--accent-bg);
+  color: var(--accent);
+
+  svg {
+    opacity: 1;
+  }
+}
+
+.sidebar-bottom {
+  padding-top: 16px;
+  border-top: 1px solid var(--border);
+  margin-top: 16px;
+}
+
+.sidebar-signout {
+  width: 100%;
+  padding: 9px 12px;
+  background: none;
+  border: none;
+  border-radius: 10px;
+  color: var(--text);
+  font-size: 14px;
+  font-family: var(--sans);
+  cursor: pointer;
+  text-align: left;
+  transition: background 0.15s, color 0.15s;
+
+  &:hover {
+    background: var(--accent-bg);
+    color: var(--text-h);
+  }
+}
+
+/* Hide the top header on desktop (sidebar handles branding) */
+@media (min-width: 901px) {
+  .app-header {
+    display: none;
+  }
+}
+
 .app {
   text-align: left;
   padding: 32px;
@@ -6,6 +142,52 @@
   @media (max-width: 768px) {
     padding: 16px;
   }
+}
+
+/* Overview KPI cards */
+.overview-kpi-row {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 16px;
+  margin-bottom: 24px;
+
+  @media (max-width: 600px) {
+    grid-template-columns: 1fr;
+    gap: 12px;
+  }
+}
+
+.kpi-card {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.kpi-label {
+  font-size: 12px;
+  color: var(--text);
+  font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.kpi-value {
+  font-size: 26px;
+  font-weight: 700;
+  color: var(--text-h);
+  letter-spacing: -0.5px;
+}
+
+.kpi-income {
+  color: #10b981;
+}
+
+.kpi-positive {
+  color: #10b981;
+}
+
+.kpi-negative {
+  color: #e53e3e;
 }
 
 /* Guest banner */
@@ -724,11 +906,6 @@ tbody tr:hover td {
 }
 
 @media (max-width: 900px) {
-  /* Hide inactive tab sections on mobile */
-  .mobile-hidden {
-    display: none !important;
-  }
-
   /* Extra bottom padding so content clears the fixed tab bar */
   .app {
     padding-bottom: 80px;

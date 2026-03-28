@@ -1736,6 +1736,55 @@ function ProfileTab({ expenses, incomes, budgets, recurringExpenses, session, gu
 
 type MobileTab = 'overview' | 'expenses' | 'income' | 'budgets' | 'recurring' | 'profile'
 
+type SidebarProps = {
+  active: MobileTab
+  onChange: (t: MobileTab) => void
+  session: Session | null
+  guestMode: boolean
+  onSignOut: () => void
+  onSignIn: () => void
+}
+
+function Sidebar({ active, onChange, session, guestMode, onSignOut, onSignIn }: SidebarProps) {
+  const items: { tab: MobileTab; label: string; icon: React.ReactNode }[] = [
+    { tab: 'overview', label: 'Overview', icon: <svg viewBox="0 0 20 20" fill="currentColor" width="18" height="18" aria-hidden="true"><path d="M10.707 2.293a1 1 0 00-1.414 0l-7 7a1 1 0 001.414 1.414L4 10.414V17a1 1 0 001 1h3a1 1 0 001-1v-2a1 1 0 011-1h2a1 1 0 011 1v2a1 1 0 001 1h3a1 1 0 001-1v-6.586l.293.293a1 1 0 001.414-1.414l-7-7z" /></svg> },
+    { tab: 'expenses', label: 'Expenses', icon: <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" width="18" height="18" aria-hidden="true"><circle cx="10" cy="10" r="8" /><path d="M10 6.5v7M7.5 11l2.5 2.5 2.5-2.5" /></svg> },
+    { tab: 'income', label: 'Income', icon: <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" width="18" height="18" aria-hidden="true"><circle cx="10" cy="10" r="8" /><path d="M10 13.5v-7M7.5 9l2.5-2.5L12.5 9" /></svg> },
+    { tab: 'budgets', label: 'Budgets', icon: <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" width="18" height="18" aria-hidden="true"><path d="M3 16h14M5 16V10m4 6V6m4 10V8m4 8V4" /></svg> },
+    { tab: 'recurring', label: 'Recurring', icon: <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" width="18" height="18" aria-hidden="true"><path d="M4 10a6 6 0 116 6" /><path d="M4 6v4h4" /></svg> },
+    { tab: 'profile', label: 'Profile', icon: <svg viewBox="0 0 20 20" fill="currentColor" width="18" height="18" aria-hidden="true"><path fillRule="evenodd" d="M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z" clipRule="evenodd" /></svg> },
+  ]
+  return (
+    <nav className="sidebar">
+      <div className="sidebar-top">
+        <div className="sidebar-brand">
+          <Logo size={22} />
+          <span className="sidebar-brand-name">Sage</span>
+        </div>
+        <div className="sidebar-nav">
+          {items.map(({ tab, label, icon }) => (
+            <button
+              key={tab}
+              className={`sidebar-nav-item${active === tab ? ' sidebar-nav-active' : ''}`}
+              onClick={() => onChange(tab)}
+            >
+              {icon}
+              <span>{label}</span>
+            </button>
+          ))}
+        </div>
+      </div>
+      <div className="sidebar-bottom">
+        {guestMode ? (
+          <button className="sidebar-signout" onClick={onSignIn}>Sign in to save data</button>
+        ) : session ? (
+          <button className="sidebar-signout" onClick={onSignOut}>Sign out</button>
+        ) : null}
+      </div>
+    </nav>
+  )
+}
+
 function MobileTabBar({ active, onChange }: { active: MobileTab; onChange: (t: MobileTab) => void }) {
   return (
     <nav className="tab-bar">
@@ -2040,82 +2089,116 @@ export default function App() {
   if (authLoading) return null
   if (!session && !guestMode) return <Auth onContinueAsGuest={() => setGuestMode(true)} />
 
+  const totalMonthExpenses = monthExpenses.reduce((s, e) => s + e.amount, 0)
+  const totalMonthIncome = monthIncomes.reduce((s, i) => s + i.amount, 0)
+  const netSavings = totalMonthIncome - totalMonthExpenses
+
   return (
-    <div className="app">
-      {guestMode && (
-        <div className="guest-banner">
-          You're browsing as a guest — data won't be saved.{' '}
-          <button onClick={() => setGuestMode(false)}>Sign in to save your data</button>
-        </div>
-      )}
-      <div className="app-header">
-        <div className="app-brand">
-          <Logo size={28} />
-          <span className="app-name">Expense Tracker</span>
-        </div>
-        {!guestMode && (
-          <button className="signout-btn" onClick={() => supabase.auth.signOut()}>Sign out</button>
-        )}
-      </div>
-      <MonthNav currentMonth={currentMonth} onPrev={prevMonth} onNext={nextMonth} />
-      <div className={`content-overview${activeTab !== 'overview' ? ' mobile-hidden' : ''}`}>
-        <div className="charts-row">
-          <SpendingChart data={chartData} />
-          <CategoryPieChart expenses={monthExpenses} />
-        </div>
-        <OverviewStatsCard
-          expenses={expenses}
-          incomes={incomes}
-          budgets={budgets}
-          currentMonth={currentMonth}
-        />
-      </div>
-      <div className="layout">
-        <aside className={activeTab !== 'overview' ? 'mobile-hidden' : ''}>
-          <Summary
-            expenses={monthExpenses}
-            incomes={monthIncomes}
-            budgets={budgets}
-            onSetBudget={setBudgetForCategory}
-          />
-        </aside>
-        <main>
-          <div className={`tab-section${activeTab !== 'expenses' ? ' mobile-hidden' : ''}`}>
-            <AddExpenseForm onAdd={handleAddExpense} defaultDate={defaultDate} />
-            <ExpenseList expenses={monthExpenses} onDelete={handleDeleteExpense} onEdit={handleEditExpense} />
+    <div className="app-shell">
+      <Sidebar
+        active={activeTab}
+        onChange={setActiveTab}
+        session={session}
+        guestMode={guestMode}
+        onSignOut={() => supabase.auth.signOut()}
+        onSignIn={() => setGuestMode(false)}
+      />
+      <div className="app-content">
+        <div className="app">
+          {guestMode && (
+            <div className="guest-banner">
+              You're browsing as a guest — data won't be saved.{' '}
+              <button onClick={() => setGuestMode(false)}>Sign in to save your data</button>
+            </div>
+          )}
+          <div className="app-header">
+            <div className="app-brand">
+              <Logo size={28} />
+              <span className="app-name">Sage</span>
+            </div>
+            {guestMode ? (
+              <button className="signout-btn" onClick={() => setGuestMode(false)}>Sign in</button>
+            ) : (
+              <button className="signout-btn" onClick={() => supabase.auth.signOut()}>Sign out</button>
+            )}
           </div>
-          <div className={`tab-section${activeTab !== 'income' ? ' mobile-hidden' : ''}`}>
-            <AddIncomeForm onAdd={handleAddIncome} defaultDate={defaultDate} />
-            <IncomeList incomes={monthIncomes} onDelete={handleDeleteIncome} onEdit={handleEditIncome} />
+          <MonthNav currentMonth={currentMonth} onPrev={prevMonth} onNext={nextMonth} />
+          <div className={`content-overview${activeTab !== 'overview' ? ' mobile-hidden' : ''}`}>
+            <div className="overview-kpi-row">
+              <div className="kpi-card card">
+                <span className="kpi-label">Monthly Expenses</span>
+                <span className="kpi-value">{totalMonthExpenses.toFixed(2)} kr</span>
+              </div>
+              <div className="kpi-card card">
+                <span className="kpi-label">Monthly Income</span>
+                <span className="kpi-value kpi-income">{totalMonthIncome.toFixed(2)} kr</span>
+              </div>
+              <div className="kpi-card card">
+                <span className="kpi-label">Net Savings</span>
+                <span className={`kpi-value${netSavings >= 0 ? ' kpi-positive' : ' kpi-negative'}`}>
+                  {netSavings >= 0 ? '+' : ''}{netSavings.toFixed(2)} kr
+                </span>
+              </div>
+            </div>
+            <div className="charts-row">
+              <SpendingChart data={chartData} />
+              <CategoryPieChart expenses={monthExpenses} />
+            </div>
+            <OverviewStatsCard
+              expenses={expenses}
+              incomes={incomes}
+              budgets={budgets}
+              currentMonth={currentMonth}
+            />
           </div>
-        </main>
-      </div>
-      <div className={`budgets-wrapper${activeTab !== 'budgets' ? ' mobile-hidden' : ''}`}>
-        <BudgetsSection
-          expenses={expenses}
-          monthIncomes={monthIncomes}
-          budgets={budgets}
-          onSetBudget={setBudgetForCategory}
-          currentMonth={currentMonth}
-        />
-      </div>
-      <div className={`recurring-wrapper${activeTab !== 'recurring' ? ' mobile-hidden' : ''}`}>
-        <RecurringSection
-          recurring={recurringExpenses}
-          onAdd={handleAddRecurring}
-          onDelete={handleDeleteRecurring}
-          onToggle={handleToggleRecurring}
-        />
-      </div>
-      <div className={`profile-wrapper${activeTab !== 'profile' ? ' mobile-hidden' : ''}`}>
-        <ProfileTab
-          expenses={expenses}
-          incomes={incomes}
-          budgets={budgets}
-          recurringExpenses={recurringExpenses}
-          session={session}
-          guestMode={guestMode}
-        />
+          <div className="layout">
+            <aside className={activeTab !== 'overview' ? 'mobile-hidden' : ''}>
+              <Summary
+                expenses={monthExpenses}
+                incomes={monthIncomes}
+                budgets={budgets}
+                onSetBudget={setBudgetForCategory}
+              />
+            </aside>
+            <main>
+              <div className={`tab-section${activeTab !== 'expenses' ? ' mobile-hidden' : ''}`}>
+                <AddExpenseForm onAdd={handleAddExpense} defaultDate={defaultDate} />
+                <ExpenseList expenses={monthExpenses} onDelete={handleDeleteExpense} onEdit={handleEditExpense} />
+              </div>
+              <div className={`tab-section${activeTab !== 'income' ? ' mobile-hidden' : ''}`}>
+                <AddIncomeForm onAdd={handleAddIncome} defaultDate={defaultDate} />
+                <IncomeList incomes={monthIncomes} onDelete={handleDeleteIncome} onEdit={handleEditIncome} />
+              </div>
+            </main>
+          </div>
+          <div className={`budgets-wrapper${activeTab !== 'budgets' ? ' mobile-hidden' : ''}`}>
+            <BudgetsSection
+              expenses={expenses}
+              monthIncomes={monthIncomes}
+              budgets={budgets}
+              onSetBudget={setBudgetForCategory}
+              currentMonth={currentMonth}
+            />
+          </div>
+          <div className={`recurring-wrapper${activeTab !== 'recurring' ? ' mobile-hidden' : ''}`}>
+            <RecurringSection
+              recurring={recurringExpenses}
+              onAdd={handleAddRecurring}
+              onDelete={handleDeleteRecurring}
+              onToggle={handleToggleRecurring}
+            />
+          </div>
+          <div className={`profile-wrapper${activeTab !== 'profile' ? ' mobile-hidden' : ''}`}>
+            <ProfileTab
+              expenses={expenses}
+              incomes={incomes}
+              budgets={budgets}
+              recurringExpenses={recurringExpenses}
+              session={session}
+              guestMode={guestMode}
+            />
+          </div>
+        </div>
       </div>
       <MobileTabBar active={activeTab} onChange={setActiveTab} />
     </div>
