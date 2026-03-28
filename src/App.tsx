@@ -2151,7 +2151,7 @@ export default function App() {
               currentMonth={currentMonth}
             />
           </div>
-          <div className="layout">
+          <div className={`layout${activeTab !== 'overview' ? ' layout-full' : ''}`}>
             <aside className={activeTab !== 'overview' ? 'mobile-hidden' : ''}>
               <Summary
                 expenses={monthExpenses}

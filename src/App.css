@@ -436,6 +436,10 @@
   }
 }
 
+.layout-full {
+  grid-template-columns: 1fr;
+}
+
 aside {
   position: sticky;
   top: 24px;
