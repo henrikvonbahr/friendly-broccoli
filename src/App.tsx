@@ -15,6 +15,7 @@ interface Expense {
   description: string
   category: string
   amount: number
+  recurring_id?: string | null
   user_id?: string
   created_at?: string
 }
@@ -26,6 +27,18 @@ interface Income {
   source: string
   amount: number
   user_id?: string
+  created_at?: string
+}
+
+interface RecurringExpense {
+  id: string
+  user_id?: string
+  description: string
+  category: string
+  amount: number
+  frequency: 'daily' | 'weekly' | 'monthly' | 'yearly'
+  start_date: string
+  active: boolean
   created_at?: string
 }
 
@@ -386,6 +399,51 @@ function CategoryPieChart({ expenses }: CategoryPieChartProps) {
   )
 }
 
+function toDateStr(d: Date): string {
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`
+}
+
+function getOccurrencesInMonth(rec: RecurringExpense, year: number, month: number): string[] {
+  const start = new Date(rec.start_date + 'T00:00:00')
+  const monthStart = new Date(year, month, 1)
+  const monthEnd = new Date(year, month + 1, 0)
+  if (start > monthEnd) return []
+
+  const dates: string[] = []
+  switch (rec.frequency) {
+    case 'daily': {
+      const from = start < monthStart ? new Date(monthStart) : new Date(start)
+      while (from <= monthEnd) { dates.push(toDateStr(from)); from.setDate(from.getDate() + 1) }
+      break
+    }
+    case 'weekly': {
+      const dow = start.getDay()
+      const cur = new Date(Math.max(start.getTime(), monthStart.getTime()))
+      while (cur.getDay() !== dow) cur.setDate(cur.getDate() + 1)
+      while (cur <= monthEnd) {
+        if (cur >= start) dates.push(toDateStr(new Date(cur)))
+        cur.setDate(cur.getDate() + 7)
+      }
+      break
+    }
+    case 'monthly': {
+      const day = Math.min(start.getDate(), new Date(year, month + 1, 0).getDate())
+      const occ = new Date(year, month, day)
+      if (occ >= start) dates.push(toDateStr(occ))
+      break
+    }
+    case 'yearly': {
+      if (start.getMonth() === month) {
+        const day = Math.min(start.getDate(), new Date(year, month + 1, 0).getDate())
+        const occ = new Date(year, month, day)
+        if (occ >= start) dates.push(toDateStr(occ))
+      }
+      break
+    }
+  }
+  return dates
+}
+
 interface AddExpenseFormProps {
   onAdd: (expense: Omit<Expense, 'id' | 'user_id' | 'created_at'>) => void
   defaultDate: string
@@ -669,7 +727,7 @@ function ExpenseList({ expenses, onDelete, onEdit }: ExpenseListProps) {
                 onClick={() => { if (swipedId === e.id) setSwipedId(null) }}
               >
                 <td>{new Date(e.date + 'T00:00:00').toLocaleDateString('default', { month: 'short', day: 'numeric' })}</td>
-                <td>{e.description}</td>
+                <td>{e.description}{e.recurring_id && <span className="recurring-indicator" title="Recurring">↻</span>}</td>
                 <td><span className="badge" style={{
                   color: CATEGORY_COLORS[e.category] ?? '#94a3b8',
                   background: `${CATEGORY_COLORS[e.category] ?? '#94a3b8'}18`,
@@ -1180,7 +1238,132 @@ function BudgetsSection({ expenses, monthIncomes, budgets, onSetBudget, currentM
   )
 }
 
-type MobileTab = 'overview' | 'expenses' | 'income' | 'budgets'
+const FREQUENCY_LABELS: Record<string, string> = {
+  daily: 'Daily',
+  weekly: 'Weekly',
+  monthly: 'Monthly',
+  yearly: 'Yearly',
+}
+
+function monthlyEquivalent(rec: RecurringExpense): number {
+  switch (rec.frequency) {
+    case 'daily': return rec.amount * 365 / 12
+    case 'weekly': return rec.amount * 52 / 12
+    case 'yearly': return rec.amount / 12
+    default: return rec.amount
+  }
+}
+
+interface RecurringSectionProps {
+  recurring: RecurringExpense[]
+  onAdd: (rec: Omit<RecurringExpense, 'id' | 'user_id' | 'created_at'>) => Promise<void>
+  onDelete: (id: string) => Promise<void>
+  onToggle: (id: string, active: boolean) => Promise<void>
+}
+
+function RecurringSection({ recurring, onAdd, onDelete, onToggle }: RecurringSectionProps) {
+  const today = toDateStr(new Date())
+  const [form, setForm] = useState({ description: '', category: CATEGORIES[0], amount: '', frequency: 'monthly' as RecurringExpense['frequency'], start_date: today })
+  const [showForm, setShowForm] = useState(false)
+
+  function setF(field: string, value: string) {
+    setForm(f => ({ ...f, [field]: value }))
+  }
+
+  async function handleSubmit(e: React.FormEvent) {
+    e.preventDefault()
+    const amount = parseFloat(form.amount)
+    if (!form.description || isNaN(amount) || amount <= 0 || !form.start_date) return
+    await onAdd({ description: form.description, category: form.category, amount, frequency: form.frequency, start_date: form.start_date, active: true })
+    setForm({ description: '', category: CATEGORIES[0], amount: '', frequency: 'monthly', start_date: today })
+    setShowForm(false)
+  }
+
+  const totalMonthly = recurring.filter(r => r.active).reduce((sum, r) => sum + monthlyEquivalent(r), 0)
+
+  return (
+    <div className="recurring-section">
+      <div className="recurring-overview card">
+        <div className="recurring-overview-row">
+          <div>
+            <h2>Recurring</h2>
+            <p className="recurring-subtitle">{recurring.filter(r => r.active).length} active · ~{Math.round(totalMonthly).toLocaleString('no')} kr/mo</p>
+          </div>
+          <button className="add-recurring-btn" onClick={() => setShowForm(s => !s)}>
+            {showForm ? '✕ Cancel' : '+ Add'}
+          </button>
+        </div>
+      </div>
+
+      {showForm && (
+        <form className="add-form card" onSubmit={handleSubmit}>
+          <h2>New Recurring Expense</h2>
+          <div className="form-grid">
+            <label>
+              Description
+              <input type="text" placeholder="e.g. Netflix" value={form.description} onChange={e => setF('description', e.target.value)} required />
+            </label>
+            <label>
+              Category
+              <select value={form.category} onChange={e => setF('category', e.target.value)}>
+                {CATEGORIES.map(c => <option key={c}>{c}</option>)}
+              </select>
+            </label>
+            <label>
+              Amount (kr)
+              <input type="number" min="0.01" step="0.01" placeholder="0.00" value={form.amount} onChange={e => setF('amount', e.target.value)} required />
+            </label>
+            <label>
+              Frequency
+              <select value={form.frequency} onChange={e => setF('frequency', e.target.value)}>
+                <option value="daily">Daily</option>
+                <option value="weekly">Weekly</option>
+                <option value="monthly">Monthly</option>
+                <option value="yearly">Yearly</option>
+              </select>
+            </label>
+            <label>
+              Start Date
+              <input type="date" value={form.start_date} onChange={e => setF('start_date', e.target.value)} required />
+            </label>
+            <button type="submit" className="add-btn">Add Recurring</button>
+          </div>
+        </form>
+      )}
+
+      {recurring.length === 0 ? (
+        <div className="card"><p className="empty">No recurring expenses set up yet.</p></div>
+      ) : (
+        <div className="recurring-list card">
+          {recurring.map(rec => (
+            <div key={rec.id} className={`recurring-row${!rec.active ? ' recurring-paused' : ''}`}>
+              <div className="recurring-dot" style={{ background: CATEGORY_COLORS[rec.category] ?? '#94a3b8' }} />
+              <div className="recurring-info">
+                <span className="recurring-name">{rec.description}</span>
+                <span className="recurring-meta">
+                  <span className="badge" style={{ color: CATEGORY_COLORS[rec.category] ?? '#94a3b8', background: `${CATEGORY_COLORS[rec.category] ?? '#94a3b8'}18`, borderColor: `${CATEGORY_COLORS[rec.category] ?? '#94a3b8'}44` }}>{rec.category}</span>
+                  <span className="recurring-freq">{FREQUENCY_LABELS[rec.frequency]}</span>
+                </span>
+              </div>
+              <div className="recurring-amount-col">
+                <span className="recurring-amount">{rec.amount.toLocaleString('no')} kr</span>
+                <span className="recurring-monthly">~{Math.round(monthlyEquivalent(rec)).toLocaleString('no')} kr/mo</span>
+              </div>
+              <div className="recurring-actions">
+                <button className="sort-btn" onClick={() => onToggle(rec.id, !rec.active)} title={rec.active ? 'Pause' : 'Resume'}>
+                  {rec.active ? '⏸' : '▶'}
+                </button>
+                <button className="delete-btn" onClick={() => onDelete(rec.id)} title="Delete">&#215;</button>
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  )
+}
+
+type MobileTab = 'overview' | 'expenses' | 'income' | 'budgets' | 'recurring'
 
 function MobileTabBar({ active, onChange }: { active: MobileTab; onChange: (t: MobileTab) => void }) {
   return (
@@ -1211,6 +1394,13 @@ function MobileTabBar({ active, onChange }: { active: MobileTab; onChange: (t: M
         </svg>
         <span>Budgets</span>
       </button>
+      <button className={`tab-btn${active === 'recurring' ? ' tab-active' : ''}`} onClick={() => onChange('recurring')}>
+        <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" width="22" height="22" aria-hidden="true">
+          <path d="M4 10a6 6 0 116 6" />
+          <path d="M4 6v4h4" />
+        </svg>
+        <span>Recurring</span>
+      </button>
     </nav>
   )
 }
@@ -1222,6 +1412,8 @@ export default function App() {
   const [expenses, setExpenses] = useState<Expense[]>([])
   const [incomes, setIncomes] = useState<Income[]>([])
   const [budgets, setBudgets] = useState<Record<string, number>>({})
+  const [recurringExpenses, setRecurringExpenses] = useState<RecurringExpense[]>([])
+  const sessionApplied = useRef(new Set<string>())
   const [activeTab, setActiveTab] = useState<MobileTab>('overview')
   const [currentMonth, setCurrentMonth] = useState<MonthState>(() => {
     const now = new Date()
@@ -1242,20 +1434,29 @@ export default function App() {
   useEffect(() => {
     let cancelled = false
     ;(async () => {
-      if (guestMode || !session) { setExpenses([]); setIncomes([]); setBudgets({}); return }
-      const [expensesRes, incomesRes, budgetsRes] = await Promise.all([
+      if (guestMode || !session) { setExpenses([]); setIncomes([]); setBudgets({}); setRecurringExpenses([]); return }
+      const [expensesRes, incomesRes, budgetsRes, recurringRes] = await Promise.all([
         supabase.from('expenses').select('*'),
         supabase.from('incomes').select('*'),
         supabase.from('budgets').select('category, amount'),
+        supabase.from('recurring_expenses').select('*').eq('active', true),
       ])
       if (!cancelled) {
-        if (!expensesRes.error) setExpenses(expensesRes.data ?? [])
+        if (!expensesRes.error) {
+          const expData = expensesRes.data ?? []
+          setExpenses(expData)
+          // Pre-populate sessionApplied so we don't re-insert existing occurrences
+          for (const e of expData) {
+            if (e.recurring_id) sessionApplied.current.add(`${e.recurring_id}:${e.date}`)
+          }
+        }
         if (!incomesRes.error) setIncomes(incomesRes.data ?? [])
         if (!budgetsRes.error) {
           const map: Record<string, number> = {}
           for (const row of budgetsRes.data ?? []) map[row.category] = row.amount
           setBudgets(map)
         }
+        if (!recurringRes.error) setRecurringExpenses(recurringRes.data ?? [])
       }
     })()
     return () => { cancelled = true }
@@ -1269,6 +1470,30 @@ export default function App() {
       .upsert({ user_id: session.user.id, category, amount }, { onConflict: 'user_id,category' })
     if (error) console.error(error)
   }
+
+  useEffect(() => {
+    let cancelled = false
+    if (!session || guestMode || recurringExpenses.length === 0) return
+    ;(async () => {
+      const newExpenses: Expense[] = []
+      for (const rec of recurringExpenses.filter(r => r.active)) {
+        const dates = getOccurrencesInMonth(rec, currentMonth.year, currentMonth.month)
+        for (const date of dates) {
+          const key = `${rec.id}:${date}`
+          if (sessionApplied.current.has(key)) continue
+          sessionApplied.current.add(key)
+          const { data, error } = await supabase
+            .from('expenses')
+            .insert({ user_id: session.user.id, description: rec.description, category: rec.category, amount: rec.amount, date, recurring_id: rec.id })
+            .select()
+            .single()
+          if (!error && data && !cancelled) newExpenses.push(data as Expense)
+        }
+      }
+      if (!cancelled && newExpenses.length > 0) setExpenses(prev => [...prev, ...newExpenses])
+    })()
+    return () => { cancelled = true }
+  }, [currentMonth.year, currentMonth.month, recurringExpenses, session, guestMode])
 
   function prevMonth() {
     setCurrentMonth(({ year, month }) => {
@@ -1368,6 +1593,31 @@ export default function App() {
       .single()
     if (error) { console.error(error); return }
     setIncomes(prev => prev.map(i => i.id === id ? data : i))
+  }
+
+  async function handleAddRecurring(rec: Omit<RecurringExpense, 'id' | 'user_id' | 'created_at'>) {
+    if (guestMode || !session) return
+    const { data, error } = await supabase
+      .from('recurring_expenses')
+      .insert({ ...rec, user_id: session.user.id })
+      .select()
+      .single()
+    if (error) { console.error(error); return }
+    setRecurringExpenses(prev => [...prev, data as RecurringExpense])
+  }
+
+  async function handleDeleteRecurring(id: string) {
+    if (guestMode || !session) return
+    const { error } = await supabase.from('recurring_expenses').delete().eq('id', id)
+    if (error) { console.error(error); return }
+    setRecurringExpenses(prev => prev.filter(r => r.id !== id))
+  }
+
+  async function handleToggleRecurring(id: string, active: boolean) {
+    if (guestMode || !session) return
+    const { error } = await supabase.from('recurring_expenses').update({ active }).eq('id', id)
+    if (error) { console.error(error); return }
+    setRecurringExpenses(prev => prev.map(r => r.id === id ? { ...r, active } : r))
   }
 
   const monthExpenses = expenses.filter(e => {
@@ -1487,6 +1737,14 @@ export default function App() {
           budgets={budgets}
           onSetBudget={setBudgetForCategory}
           currentMonth={currentMonth}
+        />
+      </div>
+      <div className={`recurring-wrapper${activeTab !== 'recurring' ? ' mobile-hidden' : ''}`}>
+        <RecurringSection
+          recurring={recurringExpenses}
+          onAdd={handleAddRecurring}
+          onDelete={handleDeleteRecurring}
+          onToggle={handleToggleRecurring}
         />
       </div>
       <MobileTabBar active={activeTab} onChange={setActiveTab} />
