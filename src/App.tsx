@@ -2390,16 +2390,15 @@ export default function App() {
   const defaultDay = isCurrentMonth ? now.getDate() : 1
   const defaultDate = `${currentMonth.year}-${String(currentMonth.month + 1).padStart(2, '0')}-${String(defaultDay).padStart(2, '0')}`
 
-
-  if (authLoading) return null
-  if (!session && !guestMode) return <Auth onContinueAsGuest={() => setGuestMode(true)} />
-
   const totalMonthExpenses = monthExpenses.reduce((s, e) => s + e.amount, 0)
   const totalMonthIncome = monthIncomes.reduce((s, i) => s + i.amount, 0)
   const netSavings = totalMonthIncome - totalMonthExpenses
   const animExpenses = useCountUp(totalMonthExpenses)
   const animIncome = useCountUp(totalMonthIncome)
   const animNet = useCountUp(Math.abs(netSavings))
+
+  if (authLoading) return null
+  if (!session && !guestMode) return <Auth onContinueAsGuest={() => setGuestMode(true)} />
 
   return (
     <div className="app-shell">
