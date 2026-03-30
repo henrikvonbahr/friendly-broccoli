@@ -16,6 +16,8 @@ interface Expense {
   recurring_id?: string | null
   tags?: string[] | null
   split_count?: number | null
+  currency?: string
+  original_amount?: number | null
   user_id?: string
   created_at?: string
 }
@@ -93,17 +95,37 @@ const INCOME_SOURCE_COLORS: Record<string, string> = {
   Other:      '#94a3b8',
 }
 
+const HOME_CURRENCY = 'SEK'
+const POPULAR_CURRENCIES = ['SEK', 'EUR', 'USD', 'GBP', 'NOK', 'DKK', 'CHF', 'JPY', 'PLN', 'AUD', 'CAD', 'THB']
+
+async function fetchRates(): Promise<Record<string, number>> {
+  const key = 'fx_rates', timeKey = 'fx_rates_time'
+  const cached = localStorage.getItem(key)
+  const cachedTime = localStorage.getItem(timeKey)
+  if (cached && cachedTime && Date.now() - Number(cachedTime) < 86400000) {
+    return JSON.parse(cached)
+  }
+  try {
+    const res = await fetch(`https://open.er-api.com/v6/latest/${HOME_CURRENCY}`)
+    const data = await res.json()
+    if (data.rates) {
+      localStorage.setItem(key, JSON.stringify(data.rates))
+      localStorage.setItem(timeKey, String(Date.now()))
+      return data.rates as Record<string, number>
+    }
+  } catch { /* silent fail */ }
+  return cached ? JSON.parse(cached) : {}
+}
+
 interface MonthNavProps {
   currentMonth: MonthState
   onPrev: () => void
   onNext: () => void
+  periodStartDay: number
 }
 
-function MonthNav({ currentMonth, onPrev, onNext }: MonthNavProps) {
-  const label = new Date(currentMonth.year, currentMonth.month).toLocaleString('default', {
-    month: 'long',
-    year: 'numeric',
-  })
+function MonthNav({ currentMonth, onPrev, onNext, periodStartDay }: MonthNavProps) {
+  const label = getPeriodLabel(currentMonth.year, currentMonth.month, periodStartDay)
   return (
     <div className="month-nav card">
       <button onClick={onPrev}>&#8592;</button>
@@ -214,7 +236,7 @@ function useCountUp(target: number, duration = 550): number {
   return value
 }
 
-function BalanceCard({ totalIncome, totalExpenses }: { totalIncome: number; totalExpenses: number }) {
+function BalanceCard({ totalIncome, totalExpenses, currentMonth, periodStartDay }: { totalIncome: number; totalExpenses: number; currentMonth: MonthState; periodStartDay: number }) {
   const remaining = totalIncome - totalExpenses
   const pct = totalIncome > 0 ? Math.min((totalExpenses / totalIncome) * 100, 100) : 0
   const isOver = remaining < 0
@@ -232,6 +254,21 @@ function BalanceCard({ totalIncome, totalExpenses }: { totalIncome: number; tota
   const animExpenses = useCountUp(totalExpenses)
   const animIncome = useCountUp(totalIncome)
 
+  const now = new Date()
+  const isCurrentPeriod = isInPeriod(toDateStr(now), currentMonth.year, currentMonth.month, periodStartDay)
+  const safeToSpend = useMemo(() => {
+    if (!isCurrentPeriod || totalIncome <= 0) return null
+    const { from, to } = getPeriodRange(currentMonth.year, currentMonth.month, periodStartDay)
+    const fromDate = new Date(from + 'T00:00:00')
+    const toDate = new Date(to + 'T00:00:00')
+    const today = new Date(); today.setHours(0, 0, 0, 0)
+    const daysInPeriod = Math.round((toDate.getTime() - fromDate.getTime()) / 86400000) + 1
+    const daysElapsed = Math.max(0, Math.round((today.getTime() - fromDate.getTime()) / 86400000))
+    const daysLeft = Math.max(1, daysInPeriod - daysElapsed)
+    const remainingBalance = Math.max(0, totalIncome - totalExpenses)
+    return { amount: remainingBalance / daysLeft, daysLeft }
+  }, [totalIncome, totalExpenses, currentMonth, periodStartDay, isCurrentPeriod])
+
   return (
     <div className="balance-card card">
       <span className="balance-label">Remaining this month</span>
@@ -245,6 +282,13 @@ function BalanceCard({ totalIncome, totalExpenses }: { totalIncome: number; tota
         <span>{animExpenses.toFixed(0)} kr spent</span>
         <span>{animIncome.toFixed(0)} kr income</span>
       </div>
+      {safeToSpend !== null && (
+        <div className="safe-to-spend">
+          <span className="safe-label">Safe to spend today</span>
+          <span className="safe-amount">{safeToSpend.amount.toFixed(0)} kr</span>
+          <span className="safe-days">{safeToSpend.daysLeft} days left in period</span>
+        </div>
+      )}
     </div>
   )
 }
@@ -603,6 +647,52 @@ function toDateStr(d: Date): string {
   return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`
 }
 
+function getPeriodRange(year: number, month: number, startDay: number): { from: string; to: string } {
+  if (startDay <= 1) {
+    const lastDay = new Date(year, month + 1, 0).getDate()
+    return {
+      from: `${year}-${String(month + 1).padStart(2, '0')}-01`,
+      to: `${year}-${String(month + 1).padStart(2, '0')}-${String(lastDay).padStart(2, '0')}`,
+    }
+  }
+  const fromDate = new Date(year, month - 1, startDay)
+  const toDate = new Date(year, month, startDay - 1)
+  return { from: toDateStr(fromDate), to: toDateStr(toDate) }
+}
+
+function isInPeriod(dateStr: string, year: number, month: number, startDay: number): boolean {
+  const { from, to } = getPeriodRange(year, month, startDay)
+  return dateStr >= from && dateStr <= to
+}
+
+function getPeriodLabel(year: number, month: number, startDay: number): string {
+  if (startDay <= 1) {
+    return new Date(year, month).toLocaleString('default', { month: 'long', year: 'numeric' })
+  }
+  const { from, to } = getPeriodRange(year, month, startDay)
+  const f = new Date(from + 'T00:00:00')
+  const t = new Date(to + 'T00:00:00')
+  return `${f.toLocaleDateString('default', { month: 'short', day: 'numeric' })} – ${t.toLocaleDateString('default', { month: 'short', day: 'numeric', year: 'numeric' })}`
+}
+
+function getCurrentPeriod(startDay: number): MonthState {
+  const now = new Date()
+  if (startDay <= 1 || now.getDate() < startDay) {
+    return { year: now.getFullYear(), month: now.getMonth() }
+  }
+  const d = new Date(now.getFullYear(), now.getMonth() + 1)
+  return { year: d.getFullYear(), month: d.getMonth() }
+}
+
+function getMonthForDate(dateStr: string, startDay: number): MonthState {
+  const d = new Date(dateStr + 'T00:00:00')
+  if (startDay <= 1 || d.getDate() < startDay) {
+    return { year: d.getFullYear(), month: d.getMonth() }
+  }
+  const next = new Date(d.getFullYear(), d.getMonth() + 1)
+  return { year: next.getFullYear(), month: next.getMonth() }
+}
+
 // ── Smart Insights ──────────────────────────────────────────
 
 interface Insight {
@@ -617,6 +707,7 @@ function computeInsights(
   incomes: Income[],
   recurringExpenses: RecurringExpense[],
   currentMonth: MonthState,
+  periodStartDay: number,
 ): Insight[] {
   const insights: Insight[] = []
 
@@ -625,18 +716,27 @@ function computeInsights(
     return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`
   }
 
+  function filterByPeriodOffset(offset: number): Expense[] {
+    const d = new Date(currentMonth.year, currentMonth.month + offset)
+    return expenses.filter(e => isInPeriod(e.date, d.getFullYear(), d.getMonth(), periodStartDay))
+  }
+
+  function filterIncomeByPeriodOffset(offset: number): Income[] {
+    const d = new Date(currentMonth.year, currentMonth.month + offset)
+    return incomes.filter(i => isInPeriod(i.date, d.getFullYear(), d.getMonth(), periodStartDay))
+  }
+
   const currentYM = ymOffset(0)
 
-  const prevMonths = [-3, -2, -1].map(ymOffset)
-  const prevData = prevMonths.map(ym =>
-    expenses.filter(e => e.date.startsWith(ym)).reduce<Record<string, number>>((acc, e) => {
+  const prevData = [-3, -2, -1].map(o =>
+    filterByPeriodOffset(o).reduce<Record<string, number>>((acc, e) => {
       acc[e.category] = (acc[e.category] ?? 0) + e.amount
       return acc
     }, {})
   )
   const monthsWithData = prevData.filter(m => Object.keys(m).length > 0).length
 
-  const currentByCat = expenses.filter(e => e.date.startsWith(currentYM)).reduce<Record<string, number>>((acc, e) => {
+  const currentByCat = filterByPeriodOffset(0).reduce<Record<string, number>>((acc, e) => {
     acc[e.category] = (acc[e.category] ?? 0) + e.amount
     return acc
   }, {})
@@ -699,10 +799,9 @@ function computeInsights(
         if (r.frequency === 'daily') return s + r.amount * 30
         return s
       }, 0)
-    const prevIncomes = [-3, -2, -1].map(o => {
-      const ym = ymOffset(o)
-      return incomes.filter(i => i.date.startsWith(ym)).reduce((s, i) => s + i.amount, 0)
-    }).filter(v => v > 0)
+    const prevIncomes = [-3, -2, -1].map(o =>
+      filterIncomeByPeriodOffset(o).reduce((s, i) => s + i.amount, 0)
+    ).filter(v => v > 0)
     if (prevIncomes.length > 0) {
       const avgIncome = prevIncomes.reduce((s, v) => s + v, 0) / prevIncomes.length
       const pct = Math.round((monthlyRecurring / avgIncome) * 100)
@@ -723,8 +822,9 @@ function computeInsights(
   let bestRate = -Infinity
   for (const ym of allMonths) {
     if (ym === currentYM) continue
-    const exp = expenses.filter(e => e.date.startsWith(ym)).reduce((s, e) => s + e.amount, 0)
-    const inc = incomes.filter(i => i.date.startsWith(ym)).reduce((s, i) => s + i.amount, 0)
+    const [y, m] = ym.split('-').map(Number)
+    const exp = expenses.filter(e => isInPeriod(e.date, y, m - 1, periodStartDay)).reduce((s, e) => s + e.amount, 0)
+    const inc = incomes.filter(i => isInPeriod(i.date, y, m - 1, periodStartDay)).reduce((s, i) => s + i.amount, 0)
     if (inc > 0) {
       const rate = (inc - exp) / inc * 100
       if (rate > bestRate) { bestRate = rate; bestYM = ym }
@@ -761,17 +861,22 @@ function computeForecast(
   incomes: Income[],
   recurringExpenses: RecurringExpense[],
   currentMonth: MonthState,
+  periodStartDay: number,
 ): Forecast | null {
   const now = new Date()
   const isCurrentMonth = currentMonth.year === now.getFullYear() && currentMonth.month === now.getMonth()
   if (!isCurrentMonth) return null
 
-  const daysElapsed = now.getDate()
-  const daysInMonth = new Date(currentMonth.year, currentMonth.month + 1, 0).getDate()
-  const currentYM = `${currentMonth.year}-${String(currentMonth.month + 1).padStart(2, '0')}`
+  const { from } = getPeriodRange(currentMonth.year, currentMonth.month, periodStartDay)
+  const periodFrom = new Date(from + 'T00:00:00')
+  const today = new Date(); today.setHours(0, 0, 0, 0)
+  const daysElapsed = Math.max(1, Math.round((today.getTime() - periodFrom.getTime()) / 86400000) + 1)
+  const { to } = getPeriodRange(currentMonth.year, currentMonth.month, periodStartDay)
+  const periodTo = new Date(to + 'T00:00:00')
+  const daysInMonth = Math.round((periodTo.getTime() - periodFrom.getTime()) / 86400000) + 1
 
-  const monthExpenses = expenses.filter(e => e.date.startsWith(currentYM)).reduce((s, e) => s + e.amount, 0)
-  const monthIncome = incomes.filter(i => i.date.startsWith(currentYM)).reduce((s, i) => s + i.amount, 0)
+  const monthExpenses = expenses.filter(e => isInPeriod(e.date, currentMonth.year, currentMonth.month, periodStartDay)).reduce((s, e) => s + e.amount, 0)
+  const monthIncome = incomes.filter(i => isInPeriod(i.date, currentMonth.year, currentMonth.month, periodStartDay)).reduce((s, i) => s + i.amount, 0)
 
   if (daysElapsed < 3) return null
 
@@ -779,14 +884,12 @@ function computeForecast(
   const projectedExpenses = dailyRate * daysInMonth
   const projectedNet = monthIncome - projectedExpenses
 
-  const prevMonths = [-3, -2, -1].map(o => {
+  const avgDailyFromHistory = [-3, -2, -1].reduce((sum, o) => {
     const d = new Date(currentMonth.year, currentMonth.month + o)
-    return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`
-  })
-  const avgDailyFromHistory = prevMonths.reduce((sum, ym) => {
-    const total = expenses.filter(e => e.date.startsWith(ym)).reduce((s, e) => s + e.amount, 0)
-    const d = new Date(Number(ym.split('-')[0]), Number(ym.split('-')[1]) - 1 + 1, 0).getDate()
-    return sum + total / d
+    const total = expenses.filter(e => isInPeriod(e.date, d.getFullYear(), d.getMonth(), periodStartDay)).reduce((s, e) => s + e.amount, 0)
+    const { from: pf, to: pt } = getPeriodRange(d.getFullYear(), d.getMonth(), periodStartDay)
+    const days = Math.round((new Date(pt + 'T00:00:00').getTime() - new Date(pf + 'T00:00:00').getTime()) / 86400000) + 1
+    return sum + total / days
   }, 0) / 3
 
   const dailyForForecast = avgDailyFromHistory > 0 ? avgDailyFromHistory : dailyRate
@@ -798,8 +901,9 @@ function computeForecast(
     return s
   }, 0)
 
-  const avgIncome = prevMonths.reduce((sum, ym) => {
-    return sum + incomes.filter(i => i.date.startsWith(ym)).reduce((s, i) => s + i.amount, 0)
+  const avgIncome = [-3, -2, -1].reduce((sum, o) => {
+    const d = new Date(currentMonth.year, currentMonth.month + o)
+    return sum + incomes.filter(i => isInPeriod(i.date, d.getFullYear(), d.getMonth(), periodStartDay)).reduce((s, i) => s + i.amount, 0)
   }, 0) / 3
 
   const next30Projected = dailyForForecast * 30 + monthlyRecurring
@@ -873,26 +977,45 @@ function AddExpenseForm({ onAdd, defaultDate }: AddExpenseFormProps) {
     split: false,
     splitWays: 2,
   })
+  const [rates, setRates] = useState<Record<string, number>>({})
+  const [currency, setCurrency] = useState(HOME_CURRENCY)
 
   useEffect(() => {
     setForm(f => ({ ...f, date: defaultDate }))
   }, [defaultDate])
 
+  useEffect(() => {
+    if (currency !== HOME_CURRENCY && Object.keys(rates).length === 0) {
+      fetchRates().then(setRates)
+    }
+  }, [currency])
+
   function set(field: string, value: string) {
     setForm(f => ({ ...f, [field]: value }))
   }
+
+  const rawAmount = parseFloat(form.amount)
+  const convertedAmount = currency !== HOME_CURRENCY && rates[currency] && !isNaN(rawAmount)
+    ? rawAmount / rates[currency]
+    : null
 
   function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault()
     const amount = parseFloat(form.amount)
     if (!form.date || !form.description || isNaN(amount) || amount <= 0) return
     const tags = form.tags.split(',').map(t => t.trim()).filter(Boolean)
+    const sekAmount = currency !== HOME_CURRENCY && rates[currency] && !isNaN(amount)
+      ? amount / rates[currency]
+      : amount
     onAdd({
       ...form,
-      amount: form.split ? amount / form.splitWays : amount,
+      amount: form.split ? sekAmount / form.splitWays : sekAmount,
       tags,
       split_count: form.split ? form.splitWays : null,
+      currency: currency !== HOME_CURRENCY ? currency : undefined,
+      original_amount: currency !== HOME_CURRENCY ? (form.split ? amount / form.splitWays : amount) : null,
     })
+    setCurrency(HOME_CURRENCY)
     setForm({ date: defaultDate, description: '', category: CATEGORIES[0], amount: '', tags: '', split: false, splitWays: 2 })
   }
 
@@ -921,16 +1044,29 @@ function AddExpenseForm({ onAdd, defaultDate }: AddExpenseFormProps) {
           />
         </label>
         <label>
-          Amount (kr)
-          <input
-            type="number"
-            min="0.01"
-            step="0.01"
-            placeholder="0.00"
-            value={form.amount}
-            onChange={e => set('amount', e.target.value)}
-            required
-          />
+          Amount
+          <div className="amount-currency-row">
+            <input
+              type="number"
+              min="0.01"
+              step="0.01"
+              placeholder="0.00"
+              value={form.amount}
+              onChange={e => set('amount', e.target.value)}
+              required
+              style={{ flex: 1 }}
+            />
+            <select
+              value={currency}
+              onChange={e => { setCurrency(e.target.value); if (e.target.value !== HOME_CURRENCY) fetchRates().then(setRates) }}
+              className="currency-select"
+            >
+              {POPULAR_CURRENCIES.map(c => <option key={c}>{c}</option>)}
+            </select>
+          </div>
+          {convertedAmount !== null && (
+            <span className="currency-preview">≈ {convertedAmount.toFixed(0)} kr</span>
+          )}
         </label>
         <label style={{ gridColumn: '1 / -1' }}>
           Tags <span style={{ fontWeight: 400, opacity: 0.6 }}>(comma-separated, optional)</span>
@@ -1234,6 +1370,9 @@ function ExpenseList({ expenses, onDelete, onEdit }: ExpenseListProps) {
                 }}>{e.category}</span></td>
                 <td className="amount-cell">
                   {e.amount.toFixed(2)} kr
+                  {e.currency && e.original_amount != null && (
+                    <span className="original-currency">{e.original_amount.toFixed(0)} {e.currency}</span>
+                  )}
                   {e.split_count && <span className="split-badge">÷{e.split_count}</span>}
                 </td>
                 <td>
@@ -1847,9 +1986,10 @@ function Sparkline({ values, color }: { values: number[], color: string }) {
 interface SpendingTrendsProps {
   expenses: Expense[]
   currentMonth: MonthState
+  periodStartDay: number
 }
 
-function SpendingTrends({ expenses, currentMonth }: SpendingTrendsProps) {
+function SpendingTrends({ expenses, currentMonth, periodStartDay }: SpendingTrendsProps) {
   const months = useMemo(() => Array.from({ length: 5 }, (_, i) => {
     const d = new Date(currentMonth.year, currentMonth.month - 4 + i)
     return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`
@@ -1860,19 +2000,21 @@ function SpendingTrends({ expenses, currentMonth }: SpendingTrendsProps) {
 
   const byCategory = useMemo(() => {
     const result: Record<string, number[]> = {}
-    for (const ym of months) {
-      const monthExp = expenses.filter(e => e.date.startsWith(ym))
+    for (let i = 0; i < months.length; i++) {
+      const ym = months[i]
+      const [y, m] = ym.split('-').map(Number)
+      const monthExp = expenses.filter(e => isInPeriod(e.date, y, m - 1, periodStartDay))
       const cats = new Set(monthExp.map(e => e.category))
       for (const cat of cats) {
         if (!result[cat]) result[cat] = new Array(5).fill(0)
       }
       monthExp.forEach(e => {
         if (!result[e.category]) result[e.category] = new Array(5).fill(0)
-        result[e.category][months.indexOf(ym)] += e.amount
+        result[e.category][i] += e.amount
       })
     }
     return result
-  }, [expenses, months])
+  }, [expenses, months, periodStartDay])
 
   const categories = Object.keys(byCategory)
     .filter(cat => byCategory[cat][4] > 0 || byCategory[cat][3] > 0)
@@ -1880,8 +2022,10 @@ function SpendingTrends({ expenses, currentMonth }: SpendingTrendsProps) {
 
   if (categories.length === 0) return null
 
-  const currentExpenses = expenses.filter(e => e.date.startsWith(currentYM))
-  const prevExpenses = expenses.filter(e => e.date.startsWith(prevYM))
+  const [cy, cm] = currentYM.split('-').map(Number)
+  const [py, pm] = prevYM.split('-').map(Number)
+  const currentExpenses = expenses.filter(e => isInPeriod(e.date, cy, cm - 1, periodStartDay))
+  const prevExpenses = expenses.filter(e => isInPeriod(e.date, py, pm - 1, periodStartDay))
   const currentByCategory = currentExpenses.reduce<Record<string, number>>((acc, e) => { acc[e.category] = (acc[e.category] ?? 0) + e.amount; return acc }, {})
   const prevByCategory = prevExpenses.reduce<Record<string, number>>((acc, e) => { acc[e.category] = (acc[e.category] ?? 0) + e.amount; return acc }, {})
 
@@ -1925,22 +2069,22 @@ interface YearViewProps {
   currentYear: number
   currentMonth: MonthState
   onSelectMonth: (m: MonthState) => void
+  periodStartDay: number
 }
 
-function YearView({ expenses, incomes, currentYear, currentMonth, onSelectMonth }: YearViewProps) {
+function YearView({ expenses, incomes, currentYear, currentMonth, onSelectMonth, periodStartDay }: YearViewProps) {
   const MONTH_LABELS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec']
   const now = new Date()
   const isCurrentYear = currentYear === now.getFullYear()
 
   const rows = useMemo(() => Array.from({ length: 12 }, (_, month) => {
-    const ym = `${currentYear}-${String(month + 1).padStart(2, '0')}`
-    const mExp = expenses.filter(e => e.date.startsWith(ym)).reduce((s, e) => s + e.amount, 0)
-    const mInc = incomes.filter(i => i.date.startsWith(ym)).reduce((s, i) => s + i.amount, 0)
+    const mExp = expenses.filter(e => isInPeriod(e.date, currentYear, month, periodStartDay)).reduce((s, e) => s + e.amount, 0)
+    const mInc = incomes.filter(i => isInPeriod(i.date, currentYear, month, periodStartDay)).reduce((s, i) => s + i.amount, 0)
     const net = mInc - mExp
     const rate = mInc > 0 ? Math.round((net / mInc) * 100) : null
     const hasData = mExp > 0 || mInc > 0
     return { month, mExp, mInc, net, rate, hasData }
-  }), [expenses, incomes, currentYear])
+  }), [expenses, incomes, currentYear, periodStartDay])
 
   const maxExp = Math.max(...rows.map(r => r.mExp), 1)
   const totalInc = rows.reduce((s, r) => s + r.mInc, 0)
@@ -2048,12 +2192,13 @@ interface ForecastCardProps {
   incomes: Income[]
   recurringExpenses: RecurringExpense[]
   currentMonth: MonthState
+  periodStartDay: number
 }
 
-function ForecastCard({ expenses, incomes, recurringExpenses, currentMonth }: ForecastCardProps) {
+function ForecastCard({ expenses, incomes, recurringExpenses, currentMonth, periodStartDay }: ForecastCardProps) {
   const forecast = useMemo(
-    () => computeForecast(expenses, incomes, recurringExpenses, currentMonth),
-    [expenses, incomes, recurringExpenses, currentMonth]
+    () => computeForecast(expenses, incomes, recurringExpenses, currentMonth, periodStartDay),
+    [expenses, incomes, recurringExpenses, currentMonth, periodStartDay]
   )
 
   if (!forecast) return null
@@ -2095,12 +2240,13 @@ interface SmartInsightsCardProps {
   incomes: Income[]
   recurringExpenses: RecurringExpense[]
   currentMonth: MonthState
+  periodStartDay: number
 }
 
-function SmartInsightsCard({ expenses, incomes, recurringExpenses, currentMonth }: SmartInsightsCardProps) {
+function SmartInsightsCard({ expenses, incomes, recurringExpenses, currentMonth, periodStartDay }: SmartInsightsCardProps) {
   const insights = useMemo(
-    () => computeInsights(expenses, incomes, recurringExpenses, currentMonth),
-    [expenses, incomes, recurringExpenses, currentMonth]
+    () => computeInsights(expenses, incomes, recurringExpenses, currentMonth, periodStartDay),
+    [expenses, incomes, recurringExpenses, currentMonth, periodStartDay]
   )
 
   if (insights.length === 0) return null
@@ -2128,18 +2274,13 @@ interface OverviewStatsCardProps {
   incomes: Income[]
   budgets: Record<string, number>
   currentMonth: MonthState
+  periodStartDay: number
 }
 
-function OverviewStatsCard({ expenses, incomes, budgets, currentMonth }: OverviewStatsCardProps) {
+function OverviewStatsCard({ expenses, incomes, budgets, currentMonth, periodStartDay }: OverviewStatsCardProps) {
   function monthTotals(year: number, month: number) {
-    const exp = expenses.filter(e => {
-      const d = new Date(e.date + 'T00:00:00')
-      return d.getFullYear() === year && d.getMonth() === month
-    })
-    const inc = incomes.filter(i => {
-      const d = new Date(i.date + 'T00:00:00')
-      return d.getFullYear() === year && d.getMonth() === month
-    })
+    const exp = expenses.filter(e => isInPeriod(e.date, year, month, periodStartDay))
+    const inc = incomes.filter(i => isInPeriod(i.date, year, month, periodStartDay))
     const totalExp = exp.reduce((s, e) => s + e.amount, 0)
     const totalInc = inc.reduce((s, i) => s + i.amount, 0)
     const byCategory = exp.reduce<Record<string, number>>((acc, e) => {
@@ -2253,9 +2394,11 @@ interface ProfileTabProps {
   recurringExpenses: RecurringExpense[]
   session: Session | null
   guestMode: boolean
+  periodStartDay: number
+  onChangePeriodStartDay: (day: number) => void
 }
 
-function ProfileTab({ expenses, incomes, budgets, recurringExpenses, session, guestMode: _guestMode }: ProfileTabProps) {
+function ProfileTab({ expenses, incomes, budgets, recurringExpenses, session, guestMode: _guestMode, periodStartDay, onChangePeriodStartDay }: ProfileTabProps) {
   const { unlocked, totalXP, level, nextLevel, progressPct, trackedMonths, bestSavingsRate, longestSavingsStreak } = useMemo(
     () => computeAchievements(expenses, incomes, budgets, recurringExpenses),
     [expenses, incomes, budgets, recurringExpenses]
@@ -2318,6 +2461,26 @@ function ProfileTab({ expenses, incomes, budgets, recurringExpenses, session, gu
             <span className="profile-stat-value">{recurringExpenses.filter(r => r.active).length}</span>
             <span className="profile-stat-label">Recurring set up</span>
           </div>
+        </div>
+      </div>
+
+      {/* Pay cycle */}
+      <div className="profile-setting card">
+        <div className="profile-setting-row">
+          <div>
+            <p className="profile-setting-label">Pay cycle start day</p>
+            <p className="profile-setting-hint">The day your salary arrives each month</p>
+          </div>
+          <select
+            className="period-select"
+            value={periodStartDay}
+            onChange={e => onChangePeriodStartDay(Number(e.target.value))}
+          >
+            <option value={1}>1st (calendar month)</option>
+            {[5, 10, 15, 20, 22, 23, 24, 25, 26, 27, 28].map(d => (
+              <option key={d} value={d}>{d}th</option>
+            ))}
+          </select>
         </div>
       </div>
 
@@ -2644,9 +2807,17 @@ export default function App() {
   const sessionApplied = useRef(new Set<string>())
   const [activeTab, setActiveTab] = useState<MobileTab>('overview')
   const [currentMonth, setCurrentMonth] = useState<MonthState>(() => {
-    const now = new Date()
-    return { year: now.getFullYear(), month: now.getMonth() }
+    const stored = localStorage.getItem('periodStartDay')
+    return getCurrentPeriod(stored ? Number(stored) : 1)
   })
+  const [periodStartDay, setPeriodStartDay] = useState<number>(() => {
+    const stored = localStorage.getItem('periodStartDay')
+    return stored ? Number(stored) : 1
+  })
+
+  useEffect(() => {
+    localStorage.setItem('periodStartDay', String(periodStartDay))
+  }, [periodStartDay])
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data: { session } }) => {
@@ -2740,8 +2911,7 @@ export default function App() {
   async function handleAddExpense(expense: Omit<Expense, 'id' | 'user_id' | 'created_at'>) {
     if (guestMode) {
       setExpenses(prev => [...prev, { ...expense, id: crypto.randomUUID() }])
-      const d = new Date(expense.date + 'T00:00:00')
-      setCurrentMonth({ year: d.getFullYear(), month: d.getMonth() })
+      setCurrentMonth(getMonthForDate(expense.date, periodStartDay))
       return
     }
     const { data, error } = await supabase
@@ -2751,15 +2921,13 @@ export default function App() {
       .single()
     if (error) { console.error(error); return }
     setExpenses(prev => [...prev, data])
-    const d = new Date(expense.date + 'T00:00:00')
-    setCurrentMonth({ year: d.getFullYear(), month: d.getMonth() })
+    setCurrentMonth(getMonthForDate(expense.date, periodStartDay))
   }
 
   async function handleAddIncome(income: Omit<Income, 'id' | 'user_id' | 'created_at'>) {
     if (guestMode) {
       setIncomes(prev => [...prev, { ...income, id: crypto.randomUUID() }])
-      const d = new Date(income.date + 'T00:00:00')
-      setCurrentMonth({ year: d.getFullYear(), month: d.getMonth() })
+      setCurrentMonth(getMonthForDate(income.date, periodStartDay))
       return
     }
     const { data, error } = await supabase
@@ -2769,8 +2937,7 @@ export default function App() {
       .single()
     if (error) { console.error(error); return }
     setIncomes(prev => [...prev, data])
-    const d = new Date(income.date + 'T00:00:00')
-    setCurrentMonth({ year: d.getFullYear(), month: d.getMonth() })
+    setCurrentMonth(getMonthForDate(income.date, periodStartDay))
   }
 
   async function handleDeleteExpense(id: string) {
@@ -2848,15 +3015,8 @@ export default function App() {
     setRecurringExpenses(prev => prev.map(r => r.id === id ? { ...r, active } : r))
   }
 
-  const monthExpenses = expenses.filter(e => {
-    const d = new Date(e.date + 'T00:00:00')
-    return d.getFullYear() === currentMonth.year && d.getMonth() === currentMonth.month
-  })
-
-  const monthIncomes = incomes.filter(i => {
-    const d = new Date(i.date + 'T00:00:00')
-    return d.getFullYear() === currentMonth.year && d.getMonth() === currentMonth.month
-  })
+  const monthExpenses = expenses.filter(e => isInPeriod(e.date, currentMonth.year, currentMonth.month, periodStartDay))
+  const monthIncomes = incomes.filter(i => isInPeriod(i.date, currentMonth.year, currentMonth.month, periodStartDay))
 
   const chartData = useMemo<ChartEntry[]>(() => {
     const now = new Date()
@@ -2866,21 +3026,15 @@ export default function App() {
       const month = d.getMonth()
       const label = d.toLocaleString('default', { month: 'short' })
       const expensesTotal = expenses
-        .filter(e => {
-          const ed = new Date(e.date + 'T00:00:00')
-          return ed.getFullYear() === year && ed.getMonth() === month
-        })
+        .filter(e => isInPeriod(e.date, year, month, periodStartDay))
         .reduce((sum, e) => sum + e.amount, 0)
       const incomeTotal = incomes
-        .filter(inc => {
-          const id = new Date(inc.date + 'T00:00:00')
-          return id.getFullYear() === year && id.getMonth() === month
-        })
+        .filter(inc => isInPeriod(inc.date, year, month, periodStartDay))
         .reduce((sum, inc) => sum + inc.amount, 0)
       const isCurrent = year === now.getFullYear() && month === now.getMonth()
       return { label, expenses: expensesTotal, income: incomeTotal, isCurrent }
     })
-  }, [expenses, incomes])
+  }, [expenses, incomes, periodStartDay])
 
   const now = new Date()
   const isCurrentMonth = currentMonth.year === now.getFullYear() && currentMonth.month === now.getMonth()
@@ -2926,10 +3080,10 @@ export default function App() {
               <button className="signout-btn" onClick={() => supabase.auth.signOut()}>Sign out</button>
             )}
           </div>
-          <MonthNav currentMonth={currentMonth} onPrev={prevMonth} onNext={nextMonth} />
+          <MonthNav currentMonth={currentMonth} onPrev={prevMonth} onNext={nextMonth} periodStartDay={periodStartDay} />
           <div className={`content-overview${activeTab !== 'overview' ? ' mobile-hidden' : ''}`}>
-            <BalanceCard totalIncome={totalMonthIncome} totalExpenses={totalMonthExpenses} />
-            <ForecastCard expenses={expenses} incomes={incomes} recurringExpenses={recurringExpenses} currentMonth={currentMonth} />
+            <BalanceCard totalIncome={totalMonthIncome} totalExpenses={totalMonthExpenses} currentMonth={currentMonth} periodStartDay={periodStartDay} />
+            <ForecastCard expenses={expenses} incomes={incomes} recurringExpenses={recurringExpenses} currentMonth={currentMonth} periodStartDay={periodStartDay} />
             <div className="overview-kpi-row">
               <div className="kpi-card card">
                 <span className="kpi-label">Monthly Expenses</span>
@@ -2955,15 +3109,17 @@ export default function App() {
               incomes={incomes}
               budgets={budgets}
               currentMonth={currentMonth}
+              periodStartDay={periodStartDay}
             />
-            <SmartInsightsCard expenses={expenses} incomes={incomes} recurringExpenses={recurringExpenses} currentMonth={currentMonth} />
-            <SpendingTrends expenses={expenses} currentMonth={currentMonth} />
+            <SmartInsightsCard expenses={expenses} incomes={incomes} recurringExpenses={recurringExpenses} currentMonth={currentMonth} periodStartDay={periodStartDay} />
+            <SpendingTrends expenses={expenses} currentMonth={currentMonth} periodStartDay={periodStartDay} />
             <YearView
               expenses={expenses}
               incomes={incomes}
               currentYear={currentMonth.year}
               currentMonth={currentMonth}
               onSelectMonth={setCurrentMonth}
+              periodStartDay={periodStartDay}
             />
           </div>
           <div className={`layout${activeTab !== 'overview' ? ' layout-full' : ''}`}>
@@ -3014,6 +3170,8 @@ export default function App() {
               recurringExpenses={recurringExpenses}
               session={session}
               guestMode={guestMode}
+              periodStartDay={periodStartDay}
+              onChangePeriodStartDay={setPeriodStartDay}
             />
           </div>
         </div>

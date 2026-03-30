@@ -2732,3 +2732,97 @@ tbody tr:hover td {
 }
 
 .tab-bar::-webkit-scrollbar { display: none; }
+
+/* ── Currency ────────────────────────────────────────────── */
+.amount-currency-row {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+
+.currency-select {
+  width: auto;
+  min-width: 72px;
+  flex-shrink: 0;
+}
+
+.currency-preview {
+  display: block;
+  font-size: 12px;
+  color: var(--accent);
+  font-weight: 500;
+  margin-top: 4px;
+}
+
+.original-currency {
+  display: block;
+  font-size: 11px;
+  opacity: 0.5;
+  margin-top: 1px;
+}
+
+/* ── Safe to Spend ───────────────────────────────────────── */
+.safe-to-spend {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 12px;
+  background: var(--accent-bg);
+  border: 1px solid var(--accent-border);
+  border-radius: 10px;
+  margin-top: 4px;
+}
+
+.safe-label {
+  font-size: 13px;
+  color: var(--text);
+  opacity: 0.7;
+  flex: 1;
+}
+
+.safe-amount {
+  font-size: 16px;
+  font-weight: 700;
+  color: var(--accent);
+  white-space: nowrap;
+}
+
+.safe-days {
+  font-size: 11px;
+  color: var(--text);
+  opacity: 0.5;
+  white-space: nowrap;
+}
+
+/* ── Profile Settings ────────────────────────────────────── */
+.profile-setting {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+}
+
+.profile-setting-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 16px;
+}
+
+.profile-setting-label {
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--text-h);
+  margin: 0 0 2px;
+}
+
+.profile-setting-hint {
+  font-size: 13px;
+  color: var(--text);
+  opacity: 0.6;
+  margin: 0;
+}
+
+.period-select {
+  flex-shrink: 0;
+  min-width: 160px;
+}
