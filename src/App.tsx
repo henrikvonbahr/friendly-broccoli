@@ -68,7 +68,7 @@ interface ChartEntry {
   isCurrent: boolean
 }
 
-const CATEGORIES = ['Groceries', 'Food', 'Drinks', 'Transport', 'Housing', 'Entertainment', 'Health', 'Clothes', 'Shopping', 'Savings', 'Other']
+const CATEGORIES = ['Groceries', 'Food', 'Drinks', 'Transport', 'Housing', 'Entertainment', 'Health', 'Shopping', 'Savings', 'Other']
 
 const CATEGORY_COLORS: Record<string, string> = {
   Groceries:     '#22c55e',
@@ -78,7 +78,6 @@ const CATEGORY_COLORS: Record<string, string> = {
   Housing:       '#8b5cf6',
   Entertainment: '#ec4899',
   Health:        '#14b8a6',
-  Clothes:       '#f59e0b',
   Shopping:      '#ef4444',
   Savings:       '#6366f1',
   Other:         '#94a3b8',
