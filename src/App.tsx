@@ -1008,7 +1008,9 @@ function AddExpenseForm({ onAdd, defaultDate }: AddExpenseFormProps) {
       ? amount / rates[currency]
       : amount
     onAdd({
-      ...form,
+      date: form.date,
+      description: form.description,
+      category: form.category,
       amount: form.split ? sekAmount / form.splitWays : sekAmount,
       tags,
       split_count: form.split ? form.splitWays : null,
