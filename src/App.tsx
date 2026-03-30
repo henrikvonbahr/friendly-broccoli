@@ -1012,8 +1012,10 @@ function AddExpenseForm({ onAdd, defaultDate }: AddExpenseFormProps) {
       amount: form.split ? sekAmount / form.splitWays : sekAmount,
       tags,
       split_count: form.split ? form.splitWays : null,
-      currency: currency !== HOME_CURRENCY ? currency : undefined,
-      original_amount: currency !== HOME_CURRENCY ? (form.split ? amount / form.splitWays : amount) : null,
+      ...(currency !== HOME_CURRENCY ? {
+        currency,
+        original_amount: form.split ? amount / form.splitWays : amount,
+      } : {}),
     })
     setCurrency(HOME_CURRENCY)
     setForm({ date: defaultDate, description: '', category: CATEGORIES[0], amount: '', tags: '', split: false, splitWays: 2 })
@@ -3037,9 +3039,9 @@ export default function App() {
   }, [expenses, incomes, periodStartDay])
 
   const now = new Date()
-  const isCurrentMonth = currentMonth.year === now.getFullYear() && currentMonth.month === now.getMonth()
-  const defaultDay = isCurrentMonth ? now.getDate() : 1
-  const defaultDate = `${currentMonth.year}-${String(currentMonth.month + 1).padStart(2, '0')}-${String(defaultDay).padStart(2, '0')}`
+  const todayStr = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`
+  const isViewingCurrentPeriod = isInPeriod(todayStr, currentMonth.year, currentMonth.month, periodStartDay)
+  const defaultDate = isViewingCurrentPeriod ? todayStr : getPeriodRange(currentMonth.year, currentMonth.month, periodStartDay).from
 
   const totalMonthExpenses = monthExpenses.reduce((s, e) => s + e.amount, 0)
   const totalMonthIncome = monthIncomes.reduce((s, i) => s + i.amount, 0)
