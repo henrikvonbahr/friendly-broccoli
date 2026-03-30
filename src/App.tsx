@@ -2693,7 +2693,7 @@ function GoalsTab({ session, guestMode }: GoalsTabProps) {
   )
 }
 
-type MobileTab = 'overview' | 'expenses' | 'income' | 'budgets' | 'recurring' | 'goals' | 'profile'
+type MobileTab = 'overview' | 'expenses' | 'income' | 'plan' | 'profile'
 
 type SidebarProps = {
   active: MobileTab
@@ -2709,9 +2709,7 @@ function Sidebar({ active, onChange, session, guestMode, onSignOut, onSignIn }: 
     { tab: 'overview', label: 'Overview', icon: <svg viewBox="0 0 20 20" fill="currentColor" width="18" height="18" aria-hidden="true"><path d="M10.707 2.293a1 1 0 00-1.414 0l-7 7a1 1 0 001.414 1.414L4 10.414V17a1 1 0 001 1h3a1 1 0 001-1v-2a1 1 0 011-1h2a1 1 0 011 1v2a1 1 0 001 1h3a1 1 0 001-1v-6.586l.293.293a1 1 0 001.414-1.414l-7-7z" /></svg> },
     { tab: 'expenses', label: 'Expenses', icon: <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" width="18" height="18" aria-hidden="true"><circle cx="10" cy="10" r="8" /><path d="M10 6.5v7M7.5 11l2.5 2.5 2.5-2.5" /></svg> },
     { tab: 'income', label: 'Income', icon: <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" width="18" height="18" aria-hidden="true"><circle cx="10" cy="10" r="8" /><path d="M10 13.5v-7M7.5 9l2.5-2.5L12.5 9" /></svg> },
-    { tab: 'budgets', label: 'Budgets', icon: <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" width="18" height="18" aria-hidden="true"><path d="M3 16h14M5 16V10m4 6V6m4 10V8m4 8V4" /></svg> },
-    { tab: 'recurring', label: 'Recurring', icon: <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" width="18" height="18" aria-hidden="true"><path d="M4 10a6 6 0 116 6" /><path d="M4 6v4h4" /></svg> },
-    { tab: 'goals', label: 'Goals', icon: <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" width="18" height="18" aria-hidden="true"><circle cx="10" cy="10" r="7"/><circle cx="10" cy="10" r="3"/><line x1="10" y1="1" x2="10" y2="3"/></svg> },
+    { tab: 'plan', label: 'Plan', icon: <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" width="18" height="18" aria-hidden="true"><rect x="3" y="3" width="14" height="14" rx="2"/><path d="M7 8h6M7 11h4"/></svg> },
     { tab: 'profile', label: 'Profile', icon: <svg viewBox="0 0 20 20" fill="currentColor" width="18" height="18" aria-hidden="true"><path fillRule="evenodd" d="M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z" clipRule="evenodd" /></svg> },
   ]
   return (
@@ -2768,26 +2766,12 @@ function MobileTabBar({ active, onChange }: { active: MobileTab; onChange: (t: M
         </svg>
         <span>Income</span>
       </button>
-      <button className={`tab-btn${active === 'budgets' ? ' tab-active' : ''}`} onClick={() => onChange('budgets')}>
+      <button className={`tab-btn${active === 'plan' ? ' tab-active' : ''}`} onClick={() => onChange('plan')}>
         <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" width="22" height="22" aria-hidden="true">
-          <path d="M3 16h14M5 16V10m4 6V6m4 10V8m4 8V4" />
+          <rect x="3" y="3" width="14" height="14" rx="2" />
+          <path d="M7 8h6M7 11h4" />
         </svg>
-        <span>Budgets</span>
-      </button>
-      <button className={`tab-btn${active === 'recurring' ? ' tab-active' : ''}`} onClick={() => onChange('recurring')}>
-        <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" width="22" height="22" aria-hidden="true">
-          <path d="M4 10a6 6 0 116 6" />
-          <path d="M4 6v4h4" />
-        </svg>
-        <span>Recurring</span>
-      </button>
-      <button className={`tab-btn${active === 'goals' ? ' tab-active' : ''}`} onClick={() => onChange('goals')}>
-        <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" width="22" height="22" aria-hidden="true">
-          <circle cx="10" cy="10" r="7"/>
-          <circle cx="10" cy="10" r="3"/>
-          <line x1="10" y1="1" x2="10" y2="3"/>
-        </svg>
-        <span>Goals</span>
+        <span>Plan</span>
       </button>
       <button className={`tab-btn${active === 'profile' ? ' tab-active' : ''}`} onClick={() => onChange('profile')}>
         <svg viewBox="0 0 20 20" fill="currentColor" width="22" height="22" aria-hidden="true">
@@ -3145,7 +3129,7 @@ export default function App() {
               </div>
             </main>
           </div>
-          <div className={`budgets-wrapper${activeTab !== 'budgets' ? ' mobile-hidden' : ''}`}>
+          <div className={`plan-wrapper${activeTab !== 'plan' ? ' mobile-hidden' : ''}`}>
             <BudgetsSection
               expenses={expenses}
               monthIncomes={monthIncomes}
@@ -3153,16 +3137,12 @@ export default function App() {
               onSetBudget={setBudgetForCategory}
               currentMonth={currentMonth}
             />
-          </div>
-          <div className={`recurring-wrapper${activeTab !== 'recurring' ? ' mobile-hidden' : ''}`}>
             <RecurringSection
               recurring={recurringExpenses}
               onAdd={handleAddRecurring}
               onDelete={handleDeleteRecurring}
               onToggle={handleToggleRecurring}
             />
-          </div>
-          <div className={`goals-wrapper${activeTab !== 'goals' ? ' mobile-hidden' : ''}`}>
             <GoalsTab session={session} guestMode={guestMode} />
           </div>
           <div className={`profile-wrapper${activeTab !== 'profile' ? ' mobile-hidden' : ''}`}>
