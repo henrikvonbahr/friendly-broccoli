@@ -2326,7 +2326,7 @@ function ForecastCard({ expenses, incomes, recurringExpenses, currentMonth, peri
         <div className={`forecast-outcome${overspendAmt ? ' forecast-over' : ' forecast-ok'}`}>
           {overspendAmt
             ? `You're on track to overspend by ${fmt(Math.round(overspendAmt))}`
-            : `You're on track to save ${Math.round(savingAmt!fmt())}`}
+            : `You're on track to save ${fmt(Math.round(savingAmt!))}`}
         </div>
       </div>
       <div className="forecast-footer">
