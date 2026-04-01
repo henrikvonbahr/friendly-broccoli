@@ -1019,7 +1019,7 @@ function AddExpenseForm({ onAdd, defaultDate }: AddExpenseFormProps) {
     e.preventDefault()
     const amount = parseFloat(form.amount)
     if (!form.date || !form.description || isNaN(amount) || amount <= 0) return
-    const tags = form.tags.split(',').map(t => t.trim()).filter(Boolean)
+    const tags = form.tags.split(',').map(t => t.trim().replace(/,/g, '')).filter(Boolean)
     const sekAmount = currency !== HOME_CURRENCY && rates[currency] && !isNaN(amount)
       ? amount / rates[currency]
       : amount
@@ -1240,7 +1240,7 @@ function ExpenseList({ expenses, onDelete, onEdit }: ExpenseListProps) {
   function saveEdit(id: string) {
     const amount = parseFloat(String(editDraft.amount))
     if (!editDraft.date || !editDraft.description || isNaN(amount) || amount <= 0) return
-    const tags = editDraft.tags.split(',').map(t => t.trim()).filter(Boolean)
+    const tags = editDraft.tags.split(',').map(t => t.trim().replace(/,/g, '')).filter(Boolean)
     onEdit(id, { date: editDraft.date, description: editDraft.description, category: editDraft.category, amount, tags, split_count: editDraft.split_count })
     setEditingId(null)
     setEditDraft({ date: '', description: '', category: '', amount: '', tags: '', split_count: null })
@@ -2198,7 +2198,7 @@ function YearView({ expenses, incomes, currentYear, currentMonth, onSelectMonth,
   const totalNet = totalInc - totalExp
   const totalRate = totalInc > 0 ? Math.round((totalNet / totalInc) * 100) : null
 
-  function fmt(n: number) {
+  function fmtK(n: number) {
     if (n >= 10000) return `${(n / 1000).toFixed(0)}k`
     if (n >= 1000) return `${(n / 1000).toFixed(1)}k`
     return n.toFixed(0)
@@ -2251,15 +2251,15 @@ function YearView({ expenses, incomes, currentYear, currentMonth, onSelectMonth,
               <span className="year-month">{MONTH_LABELS[month]}</span>
               {hasData ? (
                 <>
-                  <span className="year-income">{mInc > 0 ? fmt(mInc) : '—'}</span>
+                  <span className="year-income">{mInc > 0 ? fmtK(mInc) : '—'}</span>
                   <span className="year-expense-cell">
                     <span className="year-bar-wrap">
                       <span className="year-bar" style={{ width: `${(mExp / maxExp * 100).toFixed(1)}%` }} />
                     </span>
-                    <span className="year-expense-val">{mExp > 0 ? fmt(mExp) : '—'}</span>
+                    <span className="year-expense-val">{mExp > 0 ? fmtK(mExp) : '—'}</span>
                   </span>
                   <span className={`year-net${net >= 0 ? ' year-net-pos' : ' year-net-neg'}`}>
-                    {net >= 0 ? '+' : ''}{fmt(Math.abs(net))}
+                    {net >= 0 ? '+' : ''}{fmtK(Math.abs(net))}
                   </span>
                   <span className="year-rate-col year-rate">{rate !== null ? `${rate}%` : '—'}</span>
                 </>
@@ -2276,13 +2276,13 @@ function YearView({ expenses, incomes, currentYear, currentMonth, onSelectMonth,
         })}
         <div className="year-total-row">
           <span className="year-month">Total</span>
-          <span className="year-income">{fmt(totalInc)}</span>
+          <span className="year-income">{fmtK(totalInc)}</span>
           <span className="year-expense-cell">
             <span className="year-bar-wrap"><span className="year-bar" style={{ width: '100%' }} /></span>
-            <span className="year-expense-val">{fmt(totalExp)}</span>
+            <span className="year-expense-val">{fmtK(totalExp)}</span>
           </span>
           <span className={`year-net${totalNet >= 0 ? ' year-net-pos' : ' year-net-neg'}`}>
-            {totalNet >= 0 ? '+' : ''}{fmt(Math.abs(totalNet))}
+            {totalNet >= 0 ? '+' : ''}{fmtK(Math.abs(totalNet))}
           </span>
           <span className="year-rate-col year-rate">{totalRate !== null ? `${totalRate}%` : '—'}</span>
         </div>
@@ -2934,6 +2934,7 @@ export default function App() {
   const [incomes, setIncomes] = useState<Income[]>([])
   const [deleteToast, setDeleteToast] = useState<{ id: string; type: 'expense' | 'income'; item: Expense | Income; label: string } | null>(null)
   const deleteTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+  const pendingDeleteRef = useRef<{ id: string; type: 'expense' | 'income' } | null>(null)
   const [darkMode, setDarkMode] = useState<'system' | 'light' | 'dark'>(() => {
     return (localStorage.getItem('darkMode') as 'system' | 'light' | 'dark') ?? 'system'
   })
@@ -2969,6 +2970,13 @@ export default function App() {
   useEffect(() => {
     localStorage.setItem('budgetRollover', String(budgetRollover))
   }, [budgetRollover])
+
+  // Clear pending delete timer on unmount to prevent firing after component is gone
+  useEffect(() => {
+    return () => {
+      if (deleteTimerRef.current) clearTimeout(deleteTimerRef.current)
+    }
+  }, [])
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data: { session } }) => {
@@ -3065,9 +3073,10 @@ export default function App() {
       setCurrentMonth(getMonthForDate(expense.date, periodStartDay))
       return
     }
+    if (!session) { console.error('No session when adding expense'); return }
     const { data, error } = await supabase
       .from('expenses')
-      .insert({ ...expense, user_id: session!.user.id })
+      .insert({ ...expense, user_id: session.user.id })
       .select()
       .single()
     if (error) { console.error(error); return }
@@ -3081,9 +3090,10 @@ export default function App() {
       setCurrentMonth(getMonthForDate(income.date, periodStartDay))
       return
     }
+    if (!session) { console.error('No session when adding income'); return }
     const { data, error } = await supabase
       .from('incomes')
-      .insert({ ...income, user_id: session!.user.id })
+      .insert({ ...income, user_id: session.user.id })
       .select()
       .single()
     if (error) { console.error(error); return }
@@ -3098,16 +3108,21 @@ export default function App() {
   }
 
   function showDeleteToast(id: string, type: 'expense' | 'income', item: Expense | Income, label: string) {
-    // Immediately commit any previous pending delete
-    if (deleteToast) {
-      if (deleteToast.type === 'expense') supabase.from('expenses').delete().eq('id', deleteToast.id)
-      else supabase.from('incomes').delete().eq('id', deleteToast.id)
+    // Commit any previous pending delete immediately using the ref (avoids stale state)
+    if (pendingDeleteRef.current) {
+      const p = pendingDeleteRef.current
+      if (p.type === 'expense') supabase.from('expenses').delete().eq('id', p.id)
+      else supabase.from('incomes').delete().eq('id', p.id)
     }
     commitPendingDelete()
+    pendingDeleteRef.current = { id, type }
     setDeleteToast({ id, type, item, label })
     deleteTimerRef.current = setTimeout(() => {
-      if (type === 'expense') supabase.from('expenses').delete().eq('id', id)
-      else supabase.from('incomes').delete().eq('id', id)
+      if (pendingDeleteRef.current?.id === id) {
+        if (type === 'expense') supabase.from('expenses').delete().eq('id', id)
+        else supabase.from('incomes').delete().eq('id', id)
+        pendingDeleteRef.current = null
+      }
       setDeleteToast(null)
       deleteTimerRef.current = null
     }, 4000)
@@ -3116,6 +3131,7 @@ export default function App() {
   function handleUndoDelete() {
     if (!deleteToast) return
     commitPendingDelete()
+    pendingDeleteRef.current = null
     if (deleteToast.type === 'expense') setExpenses(prev => [...prev, deleteToast.item as Expense].sort((a, b) => b.date.localeCompare(a.date)))
     else setIncomes(prev => [...prev, deleteToast.item as Income].sort((a, b) => b.date.localeCompare(a.date)))
     setDeleteToast(null)
