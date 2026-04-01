@@ -1117,7 +1117,7 @@ function AddExpenseForm({ onAdd, defaultDate }: AddExpenseFormProps) {
                 onChange={e => setForm(f => ({ ...f, splitWays: Math.max(2, parseInt(e.target.value) || 2) }))}
                 style={{ width: 56 }}
               />
-              ways &nbsp;·&nbsp; your share: {form.amount ? `${(parseFloat(form.amount) / fmt(form.splitWays))}` : '—'}
+              ways &nbsp;·&nbsp; your share: {form.amount ? fmt(parseFloat(form.amount) / form.splitWays) : '—'}
             </label>
           )}
         </div>
