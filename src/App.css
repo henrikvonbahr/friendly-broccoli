@@ -2826,3 +2826,118 @@ tbody tr:hover td {
   flex-shrink: 0;
   min-width: 160px;
 }
+
+/* ── Date group rows ───────────────────────────────────────── */
+.date-group-row td {
+  padding: 18px 12px 4px;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text);
+  opacity: 0.55;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  border-bottom: none;
+  animation: none;
+}
+.date-group-label { }
+.date-group-total { font-weight: 700; opacity: 0.8; }
+
+/* ── Empty state ───────────────────────────────────────────── */
+.empty-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  padding: 40px 20px;
+  color: var(--text);
+}
+.empty-state p {
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--text-h);
+  opacity: 0.5;
+  margin: 0;
+}
+.empty-state span {
+  font-size: 13px;
+  opacity: 0.4;
+}
+
+/* ── Category icon in badge ────────────────────────────────── */
+.badge svg { vertical-align: middle; margin-right: 4px; opacity: 0.85; }
+.cat-icon { display: inline-flex; align-items: center; margin-right: 4px; }
+.cat-icon svg { display: block; }
+
+/* ── Delete toast ──────────────────────────────────────────── */
+.delete-toast {
+  position: fixed;
+  bottom: calc(64px + env(safe-area-inset-bottom, 0px) + 12px);
+  left: 50%;
+  transform: translateX(-50%);
+  background: var(--text-h);
+  color: var(--bg);
+  border-radius: 10px;
+  padding: 12px 16px;
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  font-size: 14px;
+  box-shadow: 0 4px 24px rgba(0,0,0,0.25);
+  z-index: 9999;
+  animation: fadeSlideUp 0.2s ease both;
+  white-space: nowrap;
+}
+.delete-toast-msg { flex: 1; }
+.delete-toast-undo {
+  background: var(--accent);
+  color: #fff;
+  border: none;
+  border-radius: 6px;
+  padding: 5px 12px;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+/* ── Toggle button ─────────────────────────────────────────── */
+.toggle-btn {
+  position: relative;
+  width: 44px;
+  height: 26px;
+  border-radius: 13px;
+  border: none;
+  background: var(--border);
+  cursor: pointer;
+  flex-shrink: 0;
+  transition: background 0.2s;
+}
+.toggle-btn.toggle-on { background: var(--accent); }
+.toggle-thumb {
+  position: absolute;
+  top: 3px;
+  left: 3px;
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  background: #fff;
+  box-shadow: 0 1px 4px rgba(0,0,0,0.2);
+  transition: transform 0.2s;
+}
+.toggle-btn.toggle-on .toggle-thumb { transform: translateX(18px); }
+
+/* ── Rollover badge ────────────────────────────────────────── */
+.rollover-badge {
+  font-size: 11px;
+  background: var(--accent-bg);
+  color: var(--accent);
+  border-radius: 4px;
+  padding: 1px 5px;
+  margin-left: 6px;
+  font-weight: 600;
+}
+
+/* ── Row description ───────────────────────────────────────── */
+.row-desc { display: block; }

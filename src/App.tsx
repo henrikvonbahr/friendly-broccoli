@@ -83,6 +83,19 @@ const CATEGORY_COLORS: Record<string, string> = {
   Other:         '#94a3b8',
 }
 
+const CATEGORY_ICONS: Record<string, React.ReactNode> = {
+  Groceries:     <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" width="13" height="13"><path d="M6 2L4 6v12a1 1 0 001 1h10a1 1 0 001-1V6l-2-4z"/><line x1="4" y1="6" x2="16" y2="6"/><path d="M12 10a2 2 0 01-4 0"/></svg>,
+  Food:          <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" width="13" height="13"><path d="M3 3v5a4 4 0 008 0V3"/><line x1="7" y1="12" x2="7" y2="17"/><path d="M15 3c0 0 2 2 2 5s-2 4-2 4v5"/></svg>,
+  Drinks:        <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" width="13" height="13"><path d="M5 2h10l-2 8a4 4 0 01-6 0L5 2z"/><line x1="4" y1="18" x2="16" y2="18"/><line x1="10" y1="14" x2="10" y2="18"/></svg>,
+  Transport:     <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" width="13" height="13"><rect x="2" y="7" width="16" height="9" rx="2"/><path d="M5 7V5a2 2 0 012-2h6a2 2 0 012 2v2"/><circle cx="6" cy="16" r="1.5" fill="currentColor" stroke="none"/><circle cx="14" cy="16" r="1.5" fill="currentColor" stroke="none"/></svg>,
+  Housing:       <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" width="13" height="13"><path d="M3 9.5L10 3l7 6.5"/><path d="M5 9v8h4v-4h2v4h4V9"/></svg>,
+  Entertainment: <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" width="13" height="13"><circle cx="10" cy="10" r="8"/><polygon points="8,7 14,10 8,13" fill="currentColor" stroke="none"/></svg>,
+  Health:        <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" width="13" height="13"><path d="M10 17s-7-4.5-7-9a4 4 0 018 0 4 4 0 018 0c0 4.5-7 9-7 9z"/></svg>,
+  Shopping:      <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" width="13" height="13"><path d="M4 3h12l1 10H3L4 3z"/><path d="M8 3V2a2 2 0 014 0v1"/><circle cx="7.5" cy="17" r="1.5" fill="currentColor" stroke="none"/><circle cx="13.5" cy="17" r="1.5" fill="currentColor" stroke="none"/></svg>,
+  Savings:       <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" width="13" height="13"><path d="M3 10a7 6 0 0114 0c0 3.5-6.5 8-7 8S3 13.5 3 10z"/><circle cx="13.5" cy="8" r="1" fill="currentColor" stroke="none"/><path d="M3 10h2"/></svg>,
+  Other:         <svg viewBox="0 0 20 20" fill="currentColor" width="13" height="13"><circle cx="10" cy="10" r="2"/><circle cx="3" cy="10" r="2"/><circle cx="17" cy="10" r="2"/></svg>,
+}
+
 const INCOME_SOURCES = ['Salary', 'Freelance', 'Investment', 'Gift', 'Rental', 'Other']
 
 const INCOME_SOURCE_COLORS: Record<string, string> = {
@@ -96,6 +109,10 @@ const INCOME_SOURCE_COLORS: Record<string, string> = {
 
 const HOME_CURRENCY = 'SEK'
 const POPULAR_CURRENCIES = ['SEK', 'EUR', 'USD', 'GBP', 'NOK', 'DKK', 'CHF', 'JPY', 'PLN', 'AUD', 'CAD', 'THB']
+
+function fmt(n: number): string {
+  return Math.round(n).toLocaleString('sv-SE') + '\u00a0kr'
+}
 
 async function fetchRates(): Promise<Record<string, number>> {
   const key = 'fx_rates', timeKey = 'fx_rates_time'
@@ -174,7 +191,7 @@ function CategoryBar({ category, amount, max, color, budget, onSetBudget }: Cate
           {category}
         </span>
         <span className="category-amounts">
-          <span className={overBudget ? 'amount-over' : 'category-amount'}>{amount.toFixed(0)} kr</span>
+          <span className={overBudget ? 'amount-over' : 'category-amount'}>{fmt(amount)}</span>
           {onSetBudget && (
             editing ? (
               <>
@@ -196,7 +213,7 @@ function CategoryBar({ category, amount, max, color, budget, onSetBudget }: Cate
               </>
             ) : (
               <button className="budget-set-btn" onClick={startEdit}>
-                {hasBudget ? ` / ${Math.round(budget!)} kr` : '+ budget'}
+                {hasBudget ? ` / ${fmt(budget!)}` : '+ budget'}
               </button>
             )
           )}
@@ -272,19 +289,19 @@ function BalanceCard({ totalIncome, totalExpenses, currentMonth, periodStartDay 
     <div className="balance-card card">
       <span className="balance-label">Remaining this month</span>
       <span className={`balance-amount${isOver ? ' balance-over' : ''}`}>
-        {isOver ? '−' : ''}{animRemaining.toFixed(0)} kr
+        {isOver ? '−' : ''}{fmt(animRemaining)}
       </span>
       <div className="balance-bar-track">
         <div className="balance-bar-fill" style={{ width: `${barPct.toFixed(1)}%`, background: barColor }} />
       </div>
       <div className="balance-meta">
-        <span>{animExpenses.toFixed(0)} kr spent</span>
-        <span>{animIncome.toFixed(0)} kr income</span>
+        <span>{fmt(animExpenses)} spent</span>
+        <span>{fmt(animIncome)} income</span>
       </div>
       {safeToSpend !== null && (
         <div className="safe-to-spend">
           <span className="safe-label">Safe to spend today</span>
-          <span className="safe-amount">{safeToSpend.amount.toFixed(0)} kr</span>
+          <span className="safe-amount">{fmt(safeToSpend.amount)}</span>
           <span className="safe-days">{safeToSpend.daysLeft} days left in period</span>
         </div>
       )}
@@ -318,16 +335,16 @@ function Summary({ expenses, incomes, budgets, onSetBudget }: SummaryProps) {
       <div className="summary-totals">
         <div className="summary-row">
           <span>Income</span>
-          <span className="income-total">{totalIncome.toFixed(2)} kr</span>
+          <span className="income-total">{fmt(totalIncome)}</span>
         </div>
         <div className="summary-row">
           <span>Expenses</span>
-          <span className="total-amount">{totalExpenses.toFixed(2)} kr</span>
+          <span className="total-amount">{fmt(totalExpenses)}</span>
         </div>
         <div className="summary-row net-row">
           <span>Net</span>
           <span className={net >= 0 ? 'net-positive' : 'net-negative'}>
-            {net >= 0 ? '+' : ''}{net.toFixed(2)} kr
+            {net >= 0 ? '+' : ''}{fmt(net)}
           </span>
         </div>
       </div>
@@ -360,7 +377,7 @@ function ChartTooltip({ active, payload, label }: Partial<TooltipContentProps>) 
       {payload.map((p, i) => (
         typeof p.value === 'number' ? (
           <p key={i} className="chart-tooltip-value" style={{ color: p.name === 'income' ? '#10b981' : undefined }}>
-            {p.name === 'income' ? 'Income' : 'Expenses'}: {p.value.toFixed(2)} kr
+            {p.name === 'income' ? 'Income' : 'Expenses'}: {fmt(p.value)}
           </p>
         ) : null
       ))}
@@ -439,7 +456,7 @@ function PieTooltip({ active, payload, total }: PieTooltipProps) {
   return (
     <div className="chart-tooltip">
       <p className="chart-tooltip-label">{name}</p>
-      <p className="chart-tooltip-value">{value.toFixed(2)} kr</p>
+      <p className="chart-tooltip-value">{fmt(value)}</p>
       <p className="chart-tooltip-label">{pct}%</p>
     </div>
   )
@@ -762,7 +779,7 @@ function computeInsights(
         type: 'warning',
         icon: '📈',
         title: `${biggestIncreaseCat} is up ${Math.round(biggestIncreasePct)}%`,
-        body: `You've spent ${Math.round(currentByCat[biggestIncreaseCat])} kr this month vs your ${monthsWithData}-month average of ${Math.round(avg)} kr.`,
+        body: `You've spent ${fmt(currentByCat[biggestIncreaseCat])} this month vs your ${monthsWithData}-month average of ${fmt(avg)}.`,
       })
     }
   }
@@ -782,8 +799,8 @@ function computeInsights(
       insights.push({
         type: 'info',
         icon: '💡',
-        title: `Save ~${Math.round(topSaving)} kr on ${topCat}`,
-        body: `Bringing ${topCat} spending back to your recent average could save you around ${Math.round(topSaving)} kr this month.`,
+        title: `Save ~${fmt(topSaving)} on ${topCat}`,
+        body: `Bringing ${topCat} spending back to your recent average could save you around ${fmt(topSaving)} this month.`,
       })
     }
   }
@@ -810,7 +827,7 @@ function computeInsights(
           type,
           icon: pct > 40 ? '⚠️' : '🔄',
           title: `Recurring costs: ${pct}% of income`,
-          body: `Your ${recurringExpenses.filter(r => r.active).length} recurring expenses add up to ~${Math.round(monthlyRecurring).toLocaleString('no')} kr/month.`,
+          body: `Your ${recurringExpenses.filter(r => r.active).length} recurring expenses add up to ~${fmt(Math.round(monthlyRecurring))}/month.`,
         })
       }
     }
@@ -1068,7 +1085,7 @@ function AddExpenseForm({ onAdd, defaultDate }: AddExpenseFormProps) {
             </select>
           </div>
           {convertedAmount !== null && (
-            <span className="currency-preview">≈ {convertedAmount.toFixed(0)} kr</span>
+            <span className="currency-preview">≈ {fmt(convertedAmount)}</span>
           )}
         </label>
         <label style={{ gridColumn: '1 / -1' }}>
@@ -1100,7 +1117,7 @@ function AddExpenseForm({ onAdd, defaultDate }: AddExpenseFormProps) {
                 onChange={e => setForm(f => ({ ...f, splitWays: Math.max(2, parseInt(e.target.value) || 2) }))}
                 style={{ width: 56 }}
               />
-              ways &nbsp;·&nbsp; your share: {form.amount ? `${(parseFloat(form.amount) / form.splitWays).toFixed(0)} kr` : '—'}
+              ways &nbsp;·&nbsp; your share: {form.amount ? `${(parseFloat(form.amount) / fmt(form.splitWays))}` : '—'}
             </label>
           )}
         </div>
@@ -1295,12 +1312,30 @@ function ExpenseList({ expenses, onDelete, onEdit }: ExpenseListProps) {
         )}
       </div>
       {filtered.length === 0 ? (
-        <p className="empty">{expenses.length === 0 ? 'No expenses this month.' : 'No matching expenses.'}</p>
+        <div className="empty-state">
+          {expenses.length === 0 ? (
+            <>
+              <svg viewBox="0 0 64 64" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" width="52" height="52" opacity="0.3">
+                <rect x="12" y="8" width="40" height="48" rx="4"/>
+                <line x1="22" y1="24" x2="42" y2="24"/><line x1="22" y1="32" x2="42" y2="32"/><line x1="22" y1="40" x2="34" y2="40"/>
+              </svg>
+              <p>No expenses this period</p>
+              <span>Add your first expense above</span>
+            </>
+          ) : (
+            <>
+              <svg viewBox="0 0 64 64" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" width="52" height="52" opacity="0.3">
+                <circle cx="28" cy="28" r="16"/><line x1="40" y1="40" x2="54" y2="54"/>
+              </svg>
+              <p>No matching expenses</p>
+              <span>Try adjusting your filters</span>
+            </>
+          )}
+        </div>
       ) : (
         <table>
           <thead>
             <tr>
-              <th>Date</th>
               <th>Description</th>
               <th>Category</th>
               <th>Amount</th>
@@ -1308,100 +1343,113 @@ function ExpenseList({ expenses, onDelete, onEdit }: ExpenseListProps) {
             </tr>
           </thead>
           <tbody>
-            {filtered.map((e, idx) => editingId === e.id ? (
-              <tr key={e.id} className="editing-row">
-                <td>
-                  <input type="date" value={editDraft.date}
-                    onChange={ev => setEditDraft(d => ({ ...d, date: ev.target.value }))} />
-                </td>
-                <td>
-                  <input type="text" value={editDraft.description}
-                    onChange={ev => setEditDraft(d => ({ ...d, description: ev.target.value }))} />
-                </td>
-                <td>
-                  <select value={editDraft.category}
-                    onChange={ev => setEditDraft(d => ({ ...d, category: ev.target.value }))}>
-                    {CATEGORIES.map(c => <option key={c}>{c}</option>)}
-                  </select>
-                </td>
-                <td>
-                  <input type="number" min="0.01" step="0.01" value={String(editDraft.amount)}
-                    onChange={ev => setEditDraft(d => ({ ...d, amount: ev.target.value }))} />
-                </td>
-                <td style={{ gridColumn: '1 / -1' }}>
-                  <input type="text" placeholder="tags (comma-separated)"
-                    value={editDraft.tags}
-                    onChange={ev => setEditDraft(d => ({ ...d, tags: ev.target.value }))} />
-                </td>
-                <td>
-                  <input type="number" min="1" placeholder="split (e.g. 2)"
-                    value={editDraft.split_count ?? ''}
-                    onChange={ev => setEditDraft(d => ({ ...d, split_count: ev.target.value ? parseInt(ev.target.value) : null }))} />
-                </td>
-                <td>
-                  <div className="row-actions">
-                    <button className="save-btn" onClick={() => saveEdit(e.id)}>&#10003;</button>
-                    <button className="cancel-btn" onClick={cancelEdit}>&#10005;</button>
-                  </div>
-                </td>
-              </tr>
-            ) : (
-              <tr
-                key={e.id}
-                className={swipedId === e.id ? 'row-swiped' : swipedEditId === e.id ? 'row-swiped-edit' : ''}
-                style={{ animationDelay: `${Math.min(idx, 12) * 0.04}s` }}
-                onTouchStart={ev => onTouchStart(e.id, ev.touches[0].clientX)}
-                onTouchMove={ev => onTouchMove(ev.touches[0].clientX)}
-                onTouchEnd={onTouchEnd}
-                onClick={() => { if (swipedId === e.id) setSwipedId(null); if (swipedEditId === e.id) setSwipedEditId(null) }}
-              >
-                <td>{new Date(e.date + 'T00:00:00').toLocaleDateString('default', { month: 'short', day: 'numeric' })}</td>
-                <td>
-                  {e.description}{e.recurring_id && <span className="recurring-indicator" title="Recurring">↻</span>}
-                  {(e.tags ?? []).length > 0 && (
-                    <div className="tag-chips">
-                      {(e.tags ?? []).map(tag => (
-                        <span key={tag} className="tag-chip">{tag}</span>
-                      ))}
-                    </div>
-                  )}
-                </td>
-                <td><span className="badge" style={{
-                  color: CATEGORY_COLORS[e.category] ?? '#94a3b8',
-                  background: `${CATEGORY_COLORS[e.category] ?? '#94a3b8'}18`,
-                  borderColor: `${CATEGORY_COLORS[e.category] ?? '#94a3b8'}44`,
-                }}>{e.category}</span></td>
-                <td className="amount-cell">
-                  {e.amount.toFixed(2)} kr
-                  {e.currency && e.original_amount != null && (
-                    <span className="original-currency">{e.original_amount.toFixed(0)} {e.currency}</span>
-                  )}
-                  {e.split_count && <span className="split-badge">÷{e.split_count}</span>}
-                </td>
-                <td>
-                  <div className="row-actions">
-                    <button className="edit-btn" onClick={ev => { ev.stopPropagation(); startEdit(e) }}>&#9998;</button>
-                    <button className="delete-btn" onClick={ev => { ev.stopPropagation(); onDelete(e.id) }}>&#215;</button>
-                  </div>
-                </td>
-                <td className="swipe-delete-cell">
-                  <button onClick={ev => { ev.stopPropagation(); onDelete(e.id); setSwipedId(null) }} aria-label="Delete">
-                    <svg viewBox="0 0 20 20" fill="currentColor" width="22" height="22">
-                      <path fillRule="evenodd" d="M9 2a1 1 0 00-.894.553L7.382 4H4a1 1 0 000 2v10a2 2 0 002 2h8a2 2 0 002-2V6a1 1 0 100-2h-3.382l-.724-1.447A1 1 0 0011 2H9zM7 8a1 1 0 012 0v6a1 1 0 11-2 0V8zm5-1a1 1 0 00-1 1v6a1 1 0 102 0V8a1 1 0 00-1-1z" clipRule="evenodd" />
-                    </svg>
-                    Delete
-                  </button>
-                </td>
-                <td className="swipe-edit-cell">
-                  <button onClick={ev => { ev.stopPropagation(); startEdit(e) }} aria-label="Edit">
-                    <svg viewBox="0 0 20 20" fill="currentColor" width="22" height="22">
-                      <path d="M13.586 3.586a2 2 0 112.828 2.828l-.793.793-2.828-2.828.793-.793zM11.379 5.793L3 14.172V17h2.828l8.38-8.379-2.83-2.828z" />
-                    </svg>
-                    Edit
-                  </button>
-                </td>
-              </tr>
-            ))}
+            {(() => {
+              const today = new Date(); today.setHours(0,0,0,0)
+              const yesterday = new Date(today); yesterday.setDate(today.getDate() - 1)
+              function dayLabel(dateStr: string) {
+                const d = new Date(dateStr + 'T00:00:00')
+                if (d.getTime() === today.getTime()) return 'Today'
+                if (d.getTime() === yesterday.getTime()) return 'Yesterday'
+                return d.toLocaleDateString('default', { weekday: 'short', month: 'short', day: 'numeric' })
+              }
+              let lastDate = ''
+              let rowIdx = 0
+              return filtered.map(e => {
+                const rows: React.ReactNode[] = []
+                if (e.date !== lastDate) {
+                  lastDate = e.date
+                  const dayTotal = filtered.filter(x => x.date === e.date).reduce((s, x) => s + x.amount, 0)
+                  rows.push(
+                    <tr key={`date-${e.date}`} className="date-group-row">
+                      <td colSpan={4}><span className="date-group-label">{dayLabel(e.date)}</span><span className="date-group-total">{fmt(dayTotal)}</span></td>
+                    </tr>
+                  )
+                }
+                const idx = rowIdx++
+                rows.push(editingId === e.id ? (
+                  <tr key={e.id} className="editing-row">
+                    <td>
+                      <input type="date" value={editDraft.date}
+                        onChange={ev => setEditDraft(d => ({ ...d, date: ev.target.value }))} />
+                      <input type="text" value={editDraft.description}
+                        onChange={ev => setEditDraft(d => ({ ...d, description: ev.target.value }))} />
+                      <input type="text" placeholder="tags (comma-separated)"
+                        value={editDraft.tags}
+                        onChange={ev => setEditDraft(d => ({ ...d, tags: ev.target.value }))} />
+                    </td>
+                    <td>
+                      <select value={editDraft.category}
+                        onChange={ev => setEditDraft(d => ({ ...d, category: ev.target.value }))}>
+                        {CATEGORIES.map(c => <option key={c}>{c}</option>)}
+                      </select>
+                    </td>
+                    <td>
+                      <input type="number" min="0.01" step="0.01" value={String(editDraft.amount)}
+                        onChange={ev => setEditDraft(d => ({ ...d, amount: ev.target.value }))} />
+                      <input type="number" min="1" placeholder="split"
+                        value={editDraft.split_count ?? ''}
+                        onChange={ev => setEditDraft(d => ({ ...d, split_count: ev.target.value ? parseInt(ev.target.value) : null }))} />
+                    </td>
+                    <td>
+                      <div className="row-actions">
+                        <button className="save-btn" onClick={() => saveEdit(e.id)}>&#10003;</button>
+                        <button className="cancel-btn" onClick={cancelEdit}>&#10005;</button>
+                      </div>
+                    </td>
+                  </tr>
+                ) : (
+                  <tr
+                    key={e.id}
+                    className={swipedId === e.id ? 'row-swiped' : swipedEditId === e.id ? 'row-swiped-edit' : ''}
+                    style={{ animationDelay: `${Math.min(idx, 12) * 0.04}s` }}
+                    onTouchStart={ev => onTouchStart(e.id, ev.touches[0].clientX)}
+                    onTouchMove={ev => onTouchMove(ev.touches[0].clientX)}
+                    onTouchEnd={onTouchEnd}
+                    onClick={() => { if (swipedId === e.id) setSwipedId(null); if (swipedEditId === e.id) setSwipedEditId(null) }}
+                  >
+                    <td>
+                      <span className="row-desc">{e.description}{e.recurring_id && <span className="recurring-indicator" title="Recurring">↻</span>}</span>
+                      {(e.tags ?? []).length > 0 && (
+                        <div className="tag-chips">
+                          {(e.tags ?? []).map(tag => <span key={tag} className="tag-chip">{tag}</span>)}
+                        </div>
+                      )}
+                    </td>
+                    <td><span className="badge" style={{
+                      color: CATEGORY_COLORS[e.category] ?? '#94a3b8',
+                      background: `${CATEGORY_COLORS[e.category] ?? '#94a3b8'}18`,
+                      borderColor: `${CATEGORY_COLORS[e.category] ?? '#94a3b8'}44`,
+                    }}>{CATEGORY_ICONS[e.category]}{e.category}</span></td>
+                    <td className="amount-cell">
+                      {fmt(e.amount)}
+                      {e.currency && e.original_amount != null && (
+                        <span className="original-currency">{e.original_amount.toFixed(0)} {e.currency}</span>
+                      )}
+                      {e.split_count && <span className="split-badge">÷{e.split_count}</span>}
+                    </td>
+                    <td>
+                      <div className="row-actions">
+                        <button className="edit-btn" onClick={ev => { ev.stopPropagation(); startEdit(e) }}>&#9998;</button>
+                        <button className="delete-btn" onClick={ev => { ev.stopPropagation(); onDelete(e.id) }}>&#215;</button>
+                      </div>
+                    </td>
+                    <td className="swipe-delete-cell">
+                      <button onClick={ev => { ev.stopPropagation(); onDelete(e.id); setSwipedId(null) }} aria-label="Delete">
+                        <svg viewBox="0 0 20 20" fill="currentColor" width="22" height="22"><path fillRule="evenodd" d="M9 2a1 1 0 00-.894.553L7.382 4H4a1 1 0 000 2v10a2 2 0 002 2h8a2 2 0 002-2V6a1 1 0 100-2h-3.382l-.724-1.447A1 1 0 0011 2H9zM7 8a1 1 0 012 0v6a1 1 0 11-2 0V8zm5-1a1 1 0 00-1 1v6a1 1 0 102 0V8a1 1 0 00-1-1z" clipRule="evenodd" /></svg>
+                        Delete
+                      </button>
+                    </td>
+                    <td className="swipe-edit-cell">
+                      <button onClick={ev => { ev.stopPropagation(); startEdit(e) }} aria-label="Edit">
+                        <svg viewBox="0 0 20 20" fill="currentColor" width="22" height="22"><path d="M13.586 3.586a2 2 0 112.828 2.828l-.793.793-2.828-2.828.793-.793zM11.379 5.793L3 14.172V17h2.828l8.38-8.379-2.83-2.828z" /></svg>
+                        Edit
+                      </button>
+                    </td>
+                  </tr>
+                ))
+                return rows
+              })
+            })()}
           </tbody>
         </table>
       )}
@@ -1506,12 +1554,29 @@ function IncomeList({ incomes, onDelete, onEdit }: IncomeListProps) {
         </select>
       </div>
       {filtered.length === 0 ? (
-        <p className="empty">{incomes.length === 0 ? 'No income this month.' : 'No matching income.'}</p>
+        <div className="empty-state">
+          {incomes.length === 0 ? (
+            <>
+              <svg viewBox="0 0 64 64" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" width="52" height="52" opacity="0.3">
+                <circle cx="32" cy="32" r="20"/><path d="M32 22v10l6 6"/><line x1="22" y1="14" x2="22" y2="8"/><line x1="42" y1="14" x2="42" y2="8"/>
+              </svg>
+              <p>No income this period</p>
+              <span>Add your income above</span>
+            </>
+          ) : (
+            <>
+              <svg viewBox="0 0 64 64" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" width="52" height="52" opacity="0.3">
+                <circle cx="28" cy="28" r="16"/><line x1="40" y1="40" x2="54" y2="54"/>
+              </svg>
+              <p>No matching income</p>
+              <span>Try adjusting your filters</span>
+            </>
+          )}
+        </div>
       ) : (
         <table>
           <thead>
             <tr>
-              <th>Date</th>
               <th>Description</th>
               <th>Source</th>
               <th>Amount</th>
@@ -1519,75 +1584,90 @@ function IncomeList({ incomes, onDelete, onEdit }: IncomeListProps) {
             </tr>
           </thead>
           <tbody>
-            {filtered.map((inc, idx) => editingId === inc.id ? (
-              <tr key={inc.id} className="editing-row">
-                <td>
-                  <input type="date" value={editDraft.date}
-                    onChange={ev => setEditDraft(d => ({ ...d, date: ev.target.value }))} />
-                </td>
-                <td>
-                  <input type="text" value={editDraft.description}
-                    onChange={ev => setEditDraft(d => ({ ...d, description: ev.target.value }))} />
-                </td>
-                <td>
-                  <select value={editDraft.source}
-                    onChange={ev => setEditDraft(d => ({ ...d, source: ev.target.value }))}>
-                    {INCOME_SOURCES.map(s => <option key={s}>{s}</option>)}
-                  </select>
-                </td>
-                <td>
-                  <input type="number" min="0.01" step="0.01" value={String(editDraft.amount)}
-                    onChange={ev => setEditDraft(d => ({ ...d, amount: ev.target.value }))} />
-                </td>
-                <td>
-                  <div className="row-actions">
-                    <button className="save-btn" onClick={() => saveEdit(inc.id)}>&#10003;</button>
-                    <button className="cancel-btn" onClick={cancelEdit}>&#10005;</button>
-                  </div>
-                </td>
-              </tr>
-            ) : (
-              <tr
-                key={inc.id}
-                className={swipedId === inc.id ? 'row-swiped' : swipedEditId === inc.id ? 'row-swiped-edit' : ''}
-                style={{ animationDelay: `${Math.min(idx, 12) * 0.04}s` }}
-                onTouchStart={ev => onTouchStart(inc.id, ev.touches[0].clientX)}
-                onTouchMove={ev => onTouchMove(ev.touches[0].clientX)}
-                onTouchEnd={onTouchEnd}
-                onClick={() => { if (swipedId === inc.id) setSwipedId(null); if (swipedEditId === inc.id) setSwipedEditId(null) }}
-              >
-                <td>{new Date(inc.date + 'T00:00:00').toLocaleDateString('default', { month: 'short', day: 'numeric' })}</td>
-                <td>{inc.description}</td>
-                <td><span className="badge" style={{
-                  color: INCOME_SOURCE_COLORS[inc.source] ?? '#94a3b8',
-                  background: `${INCOME_SOURCE_COLORS[inc.source] ?? '#94a3b8'}18`,
-                  borderColor: `${INCOME_SOURCE_COLORS[inc.source] ?? '#94a3b8'}44`,
-                }}>{inc.source}</span></td>
-                <td className="amount-cell income-amount">{inc.amount.toFixed(2)} kr</td>
-                <td>
-                  <div className="row-actions">
-                    <button className="edit-btn" onClick={ev => { ev.stopPropagation(); startEdit(inc) }}>&#9998;</button>
-                    <button className="delete-btn" onClick={ev => { ev.stopPropagation(); onDelete(inc.id) }}>&#215;</button>
-                  </div>
-                </td>
-                <td className="swipe-delete-cell">
-                  <button onClick={ev => { ev.stopPropagation(); onDelete(inc.id); setSwipedId(null) }} aria-label="Delete">
-                    <svg viewBox="0 0 20 20" fill="currentColor" width="22" height="22">
-                      <path fillRule="evenodd" d="M9 2a1 1 0 00-.894.553L7.382 4H4a1 1 0 000 2v10a2 2 0 002 2h8a2 2 0 002-2V6a1 1 0 100-2h-3.382l-.724-1.447A1 1 0 0011 2H9zM7 8a1 1 0 012 0v6a1 1 0 11-2 0V8zm5-1a1 1 0 00-1 1v6a1 1 0 102 0V8a1 1 0 00-1-1z" clipRule="evenodd" />
-                    </svg>
-                    Delete
-                  </button>
-                </td>
-                <td className="swipe-edit-cell">
-                  <button onClick={ev => { ev.stopPropagation(); startEdit(inc) }} aria-label="Edit">
-                    <svg viewBox="0 0 20 20" fill="currentColor" width="22" height="22">
-                      <path d="M13.586 3.586a2 2 0 112.828 2.828l-.793.793-2.828-2.828.793-.793zM11.379 5.793L3 14.172V17h2.828l8.38-8.379-2.83-2.828z" />
-                    </svg>
-                    Edit
-                  </button>
-                </td>
-              </tr>
-            ))}
+            {(() => {
+              const today = new Date(); today.setHours(0,0,0,0)
+              const yesterday = new Date(today); yesterday.setDate(today.getDate() - 1)
+              function dayLabel(dateStr: string) {
+                const d = new Date(dateStr + 'T00:00:00')
+                if (d.getTime() === today.getTime()) return 'Today'
+                if (d.getTime() === yesterday.getTime()) return 'Yesterday'
+                return d.toLocaleDateString('default', { weekday: 'short', month: 'short', day: 'numeric' })
+              }
+              let lastDate = ''
+              let rowIdx = 0
+              return filtered.map(inc => {
+                const rows: React.ReactNode[] = []
+                if (inc.date !== lastDate) {
+                  lastDate = inc.date
+                  const dayTotal = filtered.filter(x => x.date === inc.date).reduce((s, x) => s + x.amount, 0)
+                  rows.push(
+                    <tr key={`date-${inc.date}`} className="date-group-row">
+                      <td colSpan={4}><span className="date-group-label">{dayLabel(inc.date)}</span><span className="date-group-total income-amount">{fmt(dayTotal)}</span></td>
+                    </tr>
+                  )
+                }
+                const idx = rowIdx++
+                rows.push(editingId === inc.id ? (
+                  <tr key={inc.id} className="editing-row">
+                    <td>
+                      <input type="date" value={editDraft.date} onChange={ev => setEditDraft(d => ({ ...d, date: ev.target.value }))} />
+                      <input type="text" value={editDraft.description} onChange={ev => setEditDraft(d => ({ ...d, description: ev.target.value }))} />
+                    </td>
+                    <td>
+                      <select value={editDraft.source} onChange={ev => setEditDraft(d => ({ ...d, source: ev.target.value }))}>
+                        {INCOME_SOURCES.map(s => <option key={s}>{s}</option>)}
+                      </select>
+                    </td>
+                    <td>
+                      <input type="number" min="0.01" step="0.01" value={String(editDraft.amount)} onChange={ev => setEditDraft(d => ({ ...d, amount: ev.target.value }))} />
+                    </td>
+                    <td>
+                      <div className="row-actions">
+                        <button className="save-btn" onClick={() => saveEdit(inc.id)}>&#10003;</button>
+                        <button className="cancel-btn" onClick={cancelEdit}>&#10005;</button>
+                      </div>
+                    </td>
+                  </tr>
+                ) : (
+                  <tr
+                    key={inc.id}
+                    className={swipedId === inc.id ? 'row-swiped' : swipedEditId === inc.id ? 'row-swiped-edit' : ''}
+                    style={{ animationDelay: `${Math.min(idx, 12) * 0.04}s` }}
+                    onTouchStart={ev => onTouchStart(inc.id, ev.touches[0].clientX)}
+                    onTouchMove={ev => onTouchMove(ev.touches[0].clientX)}
+                    onTouchEnd={onTouchEnd}
+                    onClick={() => { if (swipedId === inc.id) setSwipedId(null); if (swipedEditId === inc.id) setSwipedEditId(null) }}
+                  >
+                    <td><span className="row-desc">{inc.description}</span></td>
+                    <td><span className="badge" style={{
+                      color: INCOME_SOURCE_COLORS[inc.source] ?? '#94a3b8',
+                      background: `${INCOME_SOURCE_COLORS[inc.source] ?? '#94a3b8'}18`,
+                      borderColor: `${INCOME_SOURCE_COLORS[inc.source] ?? '#94a3b8'}44`,
+                    }}>{inc.source}</span></td>
+                    <td className="amount-cell income-amount">{fmt(inc.amount)}</td>
+                    <td>
+                      <div className="row-actions">
+                        <button className="edit-btn" onClick={ev => { ev.stopPropagation(); startEdit(inc) }}>&#9998;</button>
+                        <button className="delete-btn" onClick={ev => { ev.stopPropagation(); onDelete(inc.id) }}>&#215;</button>
+                      </div>
+                    </td>
+                    <td className="swipe-delete-cell">
+                      <button onClick={ev => { ev.stopPropagation(); onDelete(inc.id); setSwipedId(null) }} aria-label="Delete">
+                        <svg viewBox="0 0 20 20" fill="currentColor" width="22" height="22"><path fillRule="evenodd" d="M9 2a1 1 0 00-.894.553L7.382 4H4a1 1 0 000 2v10a2 2 0 002 2h8a2 2 0 002-2V6a1 1 0 100-2h-3.382l-.724-1.447A1 1 0 0011 2H9zM7 8a1 1 0 012 0v6a1 1 0 11-2 0V8zm5-1a1 1 0 00-1 1v6a1 1 0 102 0V8a1 1 0 00-1-1z" clipRule="evenodd" /></svg>
+                        Delete
+                      </button>
+                    </td>
+                    <td className="swipe-edit-cell">
+                      <button onClick={ev => { ev.stopPropagation(); startEdit(inc) }} aria-label="Edit">
+                        <svg viewBox="0 0 20 20" fill="currentColor" width="22" height="22"><path d="M13.586 3.586a2 2 0 112.828 2.828l-.793.793-2.828-2.828.793-.793zM11.379 5.793L3 14.172V17h2.828l8.38-8.379-2.83-2.828z" /></svg>
+                        Edit
+                      </button>
+                    </td>
+                  </tr>
+                ))
+                return rows
+              })
+            })()}
           </tbody>
         </table>
       )}
@@ -1602,19 +1682,21 @@ interface BudgetCategoryRowProps {
   currentSpending: number
   prevAvg: number
   budget?: number
+  rollover?: number
   onSetBudget: (amount: number) => void
 }
 
-function BudgetCategoryRow({ category, color, currentSpending, prevAvg, budget, onSetBudget }: BudgetCategoryRowProps) {
+function BudgetCategoryRow({ category, color, currentSpending, prevAvg, budget, rollover = 0, onSetBudget }: BudgetCategoryRowProps) {
   const [editing, setEditing] = useState(false)
   const [draft, setDraft] = useState('')
 
   const hasBudget = budget !== undefined && budget > 0
-  const pct = hasBudget ? Math.min((currentSpending / budget) * 100, 100) : 0
-  const overBudget = hasBudget && currentSpending > budget
-  const nearBudget = hasBudget && !overBudget && pct >= 80
+  const effectiveBudget = hasBudget ? budget + rollover : undefined
+  const pct = effectiveBudget ? Math.min((currentSpending / effectiveBudget) * 100, 100) : 0
+  const overBudget = !!effectiveBudget && currentSpending > effectiveBudget
+  const nearBudget = !!effectiveBudget && !overBudget && pct >= 80
   const barColor = overBudget ? '#ef4444' : nearBudget ? '#f59e0b' : color
-  const remaining = hasBudget ? budget - currentSpending : null
+  const remaining = effectiveBudget ? effectiveBudget - currentSpending : null
   const trendPct = prevAvg > 0 && currentSpending > 0 ? ((currentSpending - prevAvg) / prevAvg) * 100 : null
 
   function startEdit() {
@@ -1633,6 +1715,7 @@ function BudgetCategoryRow({ category, color, currentSpending, prevAvg, budget, 
       <div className="budget-cat-header">
         <span className="budget-cat-name">
           <span className="category-dot" style={{ background: color }} />
+          <span className="cat-icon" style={{ color }}>{CATEGORY_ICONS[category]}</span>
           {category}
         </span>
         {editing ? (
@@ -1655,17 +1738,18 @@ function BudgetCategoryRow({ category, color, currentSpending, prevAvg, budget, 
           </div>
         ) : (
           <button className="budget-amount-btn" onClick={startEdit}>
-            {hasBudget ? `${Math.round(budget!).toLocaleString('no')} kr` : '+ Set budget'}
+            {hasBudget ? fmt(budget!) : '+ Set budget'}
+            {rollover > 0 && <span className="rollover-badge">+{fmt(rollover)}</span>}
           </button>
         )}
       </div>
       <div className="budget-cat-stats">
         <span className="budget-stat">
-          Spent: <strong className={overBudget ? 'stat-over' : ''}>{Math.round(currentSpending).toLocaleString('no')} kr</strong>
+          Spent: <strong className={overBudget ? 'stat-over' : ''}>{fmt(Math.round(currentSpending))}</strong>
         </span>
         {prevAvg > 0 && (
           <span className="budget-stat budget-stat-avg">
-            3mo avg: {Math.round(prevAvg).toLocaleString('no')} kr
+            3mo avg: {fmt(Math.round(prevAvg))}
             {trendPct !== null && Math.abs(trendPct) > 10 && (
               <span className={trendPct > 0 ? 'trend-up' : 'trend-down'}>
                 {trendPct > 0 ? ' ↑' : ' ↓'}{Math.abs(trendPct).toFixed(0)}%
@@ -1676,8 +1760,8 @@ function BudgetCategoryRow({ category, color, currentSpending, prevAvg, budget, 
         {remaining !== null && (
           <span className={`budget-stat ${overBudget ? 'stat-over' : 'stat-remaining'}`}>
             {overBudget
-              ? `${Math.round(Math.abs(remaining)).toLocaleString('no')} kr over`
-              : `${Math.round(remaining).toLocaleString('no')} kr left`}
+              ? `${fmt(Math.round(Math.abs(remaining)))} over`
+              : `${fmt(Math.round(remaining))} left`}
           </span>
         )}
       </div>
@@ -1696,9 +1780,10 @@ interface BudgetsSectionProps {
   budgets: Record<string, number>
   onSetBudget: (category: string, amount: number) => void
   currentMonth: MonthState
+  budgetRollover: boolean
 }
 
-function BudgetsSection({ expenses, monthIncomes, budgets, onSetBudget, currentMonth }: BudgetsSectionProps) {
+function BudgetsSection({ expenses, monthIncomes, budgets, onSetBudget, currentMonth, budgetRollover }: BudgetsSectionProps) {
   const monthExpenses = useMemo(() => expenses.filter(e => {
     const d = new Date(e.date + 'T00:00:00')
     return d.getFullYear() === currentMonth.year && d.getMonth() === currentMonth.month
@@ -1708,6 +1793,23 @@ function BudgetsSection({ expenses, monthIncomes, budgets, onSetBudget, currentM
     acc[e.category] = (acc[e.category] ?? 0) + e.amount
     return acc
   }, {}), [monthExpenses])
+
+  // Previous month unspent budget per category (for rollover)
+  const rolloverByCategory = useMemo(() => {
+    if (!budgetRollover) return {} as Record<string, number>
+    const prev = new Date(currentMonth.year, currentMonth.month - 1)
+    const prevYear = prev.getFullYear()
+    const prevMonth = prev.getMonth()
+    const prevSpending = expenses
+      .filter(e => { const d = new Date(e.date + 'T00:00:00'); return d.getFullYear() === prevYear && d.getMonth() === prevMonth })
+      .reduce<Record<string, number>>((acc, e) => { acc[e.category] = (acc[e.category] ?? 0) + e.amount; return acc }, {})
+    const result: Record<string, number> = {}
+    for (const cat of Object.keys(budgets)) {
+      const unspent = (budgets[cat] ?? 0) - (prevSpending[cat] ?? 0)
+      if (unspent > 0) result[cat] = unspent
+    }
+    return result
+  }, [budgetRollover, expenses, budgets, currentMonth])
 
   const prevMonthsAvg = useMemo(() => {
     const result: Record<string, number> = {}
@@ -1761,20 +1863,20 @@ function BudgetsSection({ expenses, monthIncomes, budgets, onSetBudget, currentM
             <div className="outlook-stat">
               <span className="outlook-label">Income</span>
               <span className="outlook-value income-total">
-                {totalIncome > 0 ? `${Math.round(totalIncome).toLocaleString('no')} kr` : '—'}
+                {totalIncome > 0 ? `${fmt(Math.round(totalIncome))}` : '—'}
               </span>
             </div>
             <div className="outlook-stat">
               <span className="outlook-label">Budgeted</span>
               <span className="outlook-value">
-                {totalBudgeted > 0 ? `${Math.round(totalBudgeted).toLocaleString('no')} kr` : '—'}
+                {totalBudgeted > 0 ? `${fmt(Math.round(totalBudgeted))}` : '—'}
               </span>
             </div>
             <div className="outlook-stat">
               <span className="outlook-label">Buffer</span>
               <span className={`outlook-value ${buffer === null ? '' : buffer >= 0 ? 'net-positive' : 'net-negative'}`}>
                 {buffer !== null
-                  ? `${buffer >= 0 ? '+' : ''}${Math.round(buffer).toLocaleString('no')} kr`
+                  ? `${buffer >= 0 ? '+' : ''}${fmt(Math.round(buffer))}`
                   : '—'}
               </span>
             </div>
@@ -1797,13 +1899,13 @@ function BudgetsSection({ expenses, monthIncomes, budgets, onSetBudget, currentM
             <div className="outlook-projection">
               <div className="projection-row">
                 <span>Spent so far ({dayOfMonth} / {daysInMonth} days)</span>
-                <span className="projection-value">{Math.round(totalSpent).toLocaleString('no')} kr</span>
+                <span className="projection-value">{fmt(Math.round(totalSpent))}</span>
               </div>
               {projectedSpending !== null && (
                 <div className="projection-row">
                   <span>Projected end of month</span>
                   <span className={`projection-value ${totalBudgeted > 0 && projectedSpending > totalBudgeted ? 'stat-over' : ''}`}>
-                    ~{projectedSpending.toLocaleString('no')} kr
+                    ~{fmt(projectedSpending)}
                   </span>
                 </div>
               )}
@@ -1812,8 +1914,8 @@ function BudgetsSection({ expenses, monthIncomes, budgets, onSetBudget, currentM
                   <span>Budget remaining</span>
                   <span className={`projection-value ${budgetRemaining < 0 ? 'stat-over' : 'stat-remaining'}`}>
                     {budgetRemaining >= 0
-                      ? `${Math.round(budgetRemaining).toLocaleString('no')} kr`
-                      : `−${Math.round(Math.abs(budgetRemaining)).toLocaleString('no')} kr`}
+                      ? `${fmt(Math.round(budgetRemaining))}`
+                      : `−${fmt(Math.round(Math.abs(budgetRemaining)))}`}
                   </span>
                 </div>
               )}
@@ -1835,6 +1937,7 @@ function BudgetsSection({ expenses, monthIncomes, budgets, onSetBudget, currentM
               currentSpending={currentSpendingByCategory[cat] ?? 0}
               prevAvg={prevMonthsAvg[cat] ?? 0}
               budget={budgets[cat]}
+              rollover={rolloverByCategory[cat] ?? 0}
               onSetBudget={(amt) => onSetBudget(cat, amt)}
             />
           ))}
@@ -1893,7 +1996,7 @@ function RecurringSection({ recurring, onAdd, onDelete, onToggle }: RecurringSec
         <div className="recurring-overview-row">
           <div>
             <h2>Recurring</h2>
-            <p className="recurring-subtitle">{recurring.filter(r => r.active).length} active · ~{Math.round(totalMonthly).toLocaleString('no')} kr/mo</p>
+            <p className="recurring-subtitle">{recurring.filter(r => r.active).length} active · ~{fmt(Math.round(totalMonthly))}/mo</p>
           </div>
           <button className="add-recurring-btn" onClick={() => setShowForm(s => !s)}>
             {showForm ? '✕ Cancel' : '+ Add'}
@@ -1947,13 +2050,13 @@ function RecurringSection({ recurring, onAdd, onDelete, onToggle }: RecurringSec
               <div className="recurring-info">
                 <span className="recurring-name">{rec.description}</span>
                 <span className="recurring-meta">
-                  <span className="badge" style={{ color: CATEGORY_COLORS[rec.category] ?? '#94a3b8', background: `${CATEGORY_COLORS[rec.category] ?? '#94a3b8'}18`, borderColor: `${CATEGORY_COLORS[rec.category] ?? '#94a3b8'}44` }}>{rec.category}</span>
+                  <span className="badge" style={{ color: CATEGORY_COLORS[rec.category] ?? '#94a3b8', background: `${CATEGORY_COLORS[rec.category] ?? '#94a3b8'}18`, borderColor: `${CATEGORY_COLORS[rec.category] ?? '#94a3b8'}44` }}>{CATEGORY_ICONS[rec.category]}{rec.category}</span>
                   <span className="recurring-freq">{FREQUENCY_LABELS[rec.frequency]}</span>
                 </span>
               </div>
               <div className="recurring-amount-col">
-                <span className="recurring-amount">{rec.amount.toLocaleString('no')} kr</span>
-                <span className="recurring-monthly">~{Math.round(monthlyEquivalent(rec)).toLocaleString('no')} kr/mo</span>
+                <span className="recurring-amount">{fmt(rec.amount)}</span>
+                <span className="recurring-monthly">~{fmt(Math.round(monthlyEquivalent(rec)))}/mo</span>
               </div>
               <div className="recurring-actions">
                 <button className="sort-btn" onClick={() => onToggle(rec.id, !rec.active)} title={rec.active ? 'Pause' : 'Resume'}>
@@ -2048,7 +2151,7 @@ function SpendingTrends({ expenses, currentMonth, periodStartDay }: SpendingTren
               <span className="trend-dot" style={{ background: color }} />
               <span className="trend-cat">{cat}</span>
               <Sparkline values={sparkValues} color={color} />
-              <span className="trend-amount">{curr.toFixed(0)} kr</span>
+              <span className="trend-amount">{fmt(curr)}</span>
               {change !== null ? (
                 <span className={`trend-change${change > 5 ? ' trend-up' : change < -5 ? ' trend-down' : ' trend-flat'}`}>
                   {change > 5 ? '↑' : change < -5 ? '↓' : '→'}{Math.abs(Math.round(change))}%
@@ -2218,18 +2321,18 @@ function ForecastCard({ expenses, incomes, recurringExpenses, currentMonth, peri
       <div className="forecast-body">
         <div className="forecast-main">
           <span className="forecast-label">Projected spend</span>
-          <span className="forecast-value">{Math.round(forecast.projectedExpenses).toLocaleString('no')} kr</span>
+          <span className="forecast-value">{fmt(Math.round(forecast.projectedExpenses))}</span>
         </div>
         <div className={`forecast-outcome${overspendAmt ? ' forecast-over' : ' forecast-ok'}`}>
           {overspendAmt
-            ? `You're on track to overspend by ${Math.round(overspendAmt).toLocaleString('no')} kr`
-            : `You're on track to save ${Math.round(savingAmt!).toLocaleString('no')} kr`}
+            ? `You're on track to overspend by ${fmt(Math.round(overspendAmt))}`
+            : `You're on track to save ${Math.round(savingAmt!fmt())}`}
         </div>
       </div>
       <div className="forecast-footer">
-        <span className="forecast-rate">{Math.round(forecast.dailyRate).toLocaleString('no')} kr/day avg</span>
+        <span className="forecast-rate">{fmt(Math.round(forecast.dailyRate))}/day avg</span>
         <span className={`forecast-cashflow${forecast.next30Cashflow < 0 ? ' forecast-over' : ''}`}>
-          30-day cashflow: {forecast.next30Cashflow >= 0 ? '+' : ''}{Math.round(forecast.next30Cashflow).toLocaleString('no')} kr
+          30-day cashflow: {forecast.next30Cashflow >= 0 ? '+' : ''}{fmt(Math.round(forecast.next30Cashflow))}
         </span>
       </div>
     </div>
@@ -2340,10 +2443,10 @@ function OverviewStatsCard({ expenses, incomes, budgets, currentMonth, periodSta
                 {spendDelta > 0 ? '↑' : '↓'} {Math.abs(Math.round(spendDelta))}% spending
               </p>
               {topIncrease && (
-                <p className="stats-detail"><span className="delta-up">↑</span> {topIncrease.cat} +{Math.round(topIncrease.delta).toLocaleString('no')} kr</p>
+                <p className="stats-detail"><span className="delta-up">↑</span> {topIncrease.cat} +{fmt(Math.round(topIncrease.delta))}</p>
               )}
               {topDecrease && (
-                <p className="stats-detail"><span className="delta-down">↓</span> {topDecrease.cat} {Math.round(topDecrease.delta).toLocaleString('no')} kr</p>
+                <p className="stats-detail"><span className="delta-down">↓</span> {topDecrease.cat} {fmt(Math.round(topDecrease.delta))}</p>
               )}
             </>
           ) : (
@@ -2399,9 +2502,13 @@ interface ProfileTabProps {
   guestMode: boolean
   periodStartDay: number
   onChangePeriodStartDay: (day: number) => void
+  darkMode: 'system' | 'light' | 'dark'
+  onChangeDarkMode: (mode: 'system' | 'light' | 'dark') => void
+  budgetRollover: boolean
+  onChangeBudgetRollover: (v: boolean) => void
 }
 
-function ProfileTab({ expenses, incomes, budgets, recurringExpenses, session, guestMode: _guestMode, periodStartDay, onChangePeriodStartDay }: ProfileTabProps) {
+function ProfileTab({ expenses, incomes, budgets, recurringExpenses, session, guestMode: _guestMode, periodStartDay, onChangePeriodStartDay, darkMode, onChangeDarkMode, budgetRollover, onChangeBudgetRollover }: ProfileTabProps) {
   const { unlocked, totalXP, level, nextLevel, progressPct, trackedMonths, bestSavingsRate, longestSavingsStreak } = useMemo(
     () => computeAchievements(expenses, incomes, budgets, recurringExpenses),
     [expenses, incomes, budgets, recurringExpenses]
@@ -2484,6 +2591,42 @@ function ProfileTab({ expenses, incomes, budgets, recurringExpenses, session, gu
               <option key={d} value={d}>{d}th</option>
             ))}
           </select>
+        </div>
+      </div>
+
+      {/* Appearance */}
+      <div className="profile-setting card">
+        <div className="profile-setting-row">
+          <div>
+            <p className="profile-setting-label">Appearance</p>
+            <p className="profile-setting-hint">Choose light, dark, or follow your system</p>
+          </div>
+          <select
+            className="period-select"
+            value={darkMode}
+            onChange={e => onChangeDarkMode(e.target.value as 'system' | 'light' | 'dark')}
+          >
+            <option value="system">System default</option>
+            <option value="light">Light</option>
+            <option value="dark">Dark</option>
+          </select>
+        </div>
+      </div>
+
+      {/* Budget rollover */}
+      <div className="profile-setting card">
+        <div className="profile-setting-row">
+          <div>
+            <p className="profile-setting-label">Budget rollover</p>
+            <p className="profile-setting-hint">Carry unspent budget forward to the next month</p>
+          </div>
+          <button
+            className={`toggle-btn${budgetRollover ? ' toggle-on' : ''}`}
+            onClick={() => onChangeBudgetRollover(!budgetRollover)}
+            aria-pressed={budgetRollover}
+          >
+            <span className="toggle-thumb" />
+          </button>
         </div>
       </div>
 
@@ -2658,8 +2801,8 @@ function GoalsTab({ session, guestMode }: GoalsTabProps) {
                 </div>
                 <div className="goal-progress-row">
                   <span className="goal-amounts">
-                    <span style={{ fontWeight: 700, fontSize: 18 }}>{Math.round(goal.current_amount).toLocaleString('no')}</span>
-                    <span style={{ opacity: 0.5 }}> / {Math.round(goal.target_amount).toLocaleString('no')} kr</span>
+                    <span style={{ fontWeight: 700, fontSize: 18 }}>{Math.round(goal.current_amount)}</span>
+                    <span style={{ opacity: 0.5 }}> / {fmt(Math.round(goal.target_amount))}</span>
                   </span>
                   <span className="goal-pct" style={{ color: goal.color }}>{Math.round(pct)}%</span>
                 </div>
@@ -2789,6 +2932,14 @@ export default function App() {
   const [guestMode, setGuestMode] = useState(false)
   const [expenses, setExpenses] = useState<Expense[]>([])
   const [incomes, setIncomes] = useState<Income[]>([])
+  const [deleteToast, setDeleteToast] = useState<{ id: string; type: 'expense' | 'income'; item: Expense | Income; label: string } | null>(null)
+  const deleteTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+  const [darkMode, setDarkMode] = useState<'system' | 'light' | 'dark'>(() => {
+    return (localStorage.getItem('darkMode') as 'system' | 'light' | 'dark') ?? 'system'
+  })
+  const [budgetRollover, setBudgetRollover] = useState<boolean>(() => {
+    return localStorage.getItem('budgetRollover') === 'true'
+  })
   const [budgets, setBudgets] = useState<Record<string, number>>({})
   const [recurringExpenses, setRecurringExpenses] = useState<RecurringExpense[]>([])
   const sessionApplied = useRef(new Set<string>())
@@ -2805,6 +2956,19 @@ export default function App() {
   useEffect(() => {
     localStorage.setItem('periodStartDay', String(periodStartDay))
   }, [periodStartDay])
+
+  useEffect(() => {
+    localStorage.setItem('darkMode', darkMode)
+    if (darkMode === 'system') {
+      document.documentElement.removeAttribute('data-theme')
+    } else {
+      document.documentElement.setAttribute('data-theme', darkMode)
+    }
+  }, [darkMode])
+
+  useEffect(() => {
+    localStorage.setItem('budgetRollover', String(budgetRollover))
+  }, [budgetRollover])
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data: { session } }) => {
@@ -2927,24 +3091,50 @@ export default function App() {
     setCurrentMonth(getMonthForDate(income.date, periodStartDay))
   }
 
-  async function handleDeleteExpense(id: string) {
-    if (guestMode) {
-      setExpenses(prev => prev.filter(e => e.id !== id))
-      return
-    }
-    const { error } = await supabase.from('expenses').delete().eq('id', id)
-    if (error) { console.error(error); return }
-    setExpenses(prev => prev.filter(e => e.id !== id))
+  function commitPendingDelete() {
+    if (!deleteTimerRef.current) return
+    clearTimeout(deleteTimerRef.current)
+    deleteTimerRef.current = null
   }
 
-  async function handleDeleteIncome(id: string) {
-    if (guestMode) {
-      setIncomes(prev => prev.filter(i => i.id !== id))
-      return
+  function showDeleteToast(id: string, type: 'expense' | 'income', item: Expense | Income, label: string) {
+    // Immediately commit any previous pending delete
+    if (deleteToast) {
+      if (deleteToast.type === 'expense') supabase.from('expenses').delete().eq('id', deleteToast.id)
+      else supabase.from('incomes').delete().eq('id', deleteToast.id)
     }
-    const { error } = await supabase.from('incomes').delete().eq('id', id)
-    if (error) { console.error(error); return }
+    commitPendingDelete()
+    setDeleteToast({ id, type, item, label })
+    deleteTimerRef.current = setTimeout(() => {
+      if (type === 'expense') supabase.from('expenses').delete().eq('id', id)
+      else supabase.from('incomes').delete().eq('id', id)
+      setDeleteToast(null)
+      deleteTimerRef.current = null
+    }, 4000)
+  }
+
+  function handleUndoDelete() {
+    if (!deleteToast) return
+    commitPendingDelete()
+    if (deleteToast.type === 'expense') setExpenses(prev => [...prev, deleteToast.item as Expense].sort((a, b) => b.date.localeCompare(a.date)))
+    else setIncomes(prev => [...prev, deleteToast.item as Income].sort((a, b) => b.date.localeCompare(a.date)))
+    setDeleteToast(null)
+  }
+
+  function handleDeleteExpense(id: string) {
+    const item = expenses.find(e => e.id === id)
+    if (!item) return
+    setExpenses(prev => prev.filter(e => e.id !== id))
+    if (guestMode) return
+    showDeleteToast(id, 'expense', item, item.description)
+  }
+
+  function handleDeleteIncome(id: string) {
+    const item = incomes.find(i => i.id === id)
+    if (!item) return
     setIncomes(prev => prev.filter(i => i.id !== id))
+    if (guestMode) return
+    showDeleteToast(id, 'income', item, item.description)
   }
 
   async function handleEditExpense(id: string, updates: Omit<Expense, 'id' | 'user_id' | 'created_at'>) {
@@ -3074,16 +3264,16 @@ export default function App() {
             <div className="overview-kpi-row">
               <div className="kpi-card card">
                 <span className="kpi-label">Monthly Expenses</span>
-                <span className="kpi-value">{animExpenses.toFixed(2)} kr</span>
+                <span className="kpi-value">{fmt(animExpenses)}</span>
               </div>
               <div className="kpi-card card">
                 <span className="kpi-label">Monthly Income</span>
-                <span className="kpi-value kpi-income">{animIncome.toFixed(2)} kr</span>
+                <span className="kpi-value kpi-income">{fmt(animIncome)}</span>
               </div>
               <div className="kpi-card card">
                 <span className="kpi-label">Net Savings</span>
                 <span className={`kpi-value${netSavings >= 0 ? ' kpi-positive' : ' kpi-negative'}`}>
-                  {netSavings >= 0 ? '+' : ''}{animNet.toFixed(2)} kr
+                  {netSavings >= 0 ? '+' : ''}{fmt(animNet)}
                 </span>
               </div>
             </div>
@@ -3136,6 +3326,7 @@ export default function App() {
               budgets={budgets}
               onSetBudget={setBudgetForCategory}
               currentMonth={currentMonth}
+              budgetRollover={budgetRollover}
             />
             <RecurringSection
               recurring={recurringExpenses}
@@ -3155,11 +3346,21 @@ export default function App() {
               guestMode={guestMode}
               periodStartDay={periodStartDay}
               onChangePeriodStartDay={setPeriodStartDay}
+              darkMode={darkMode}
+              onChangeDarkMode={setDarkMode}
+              budgetRollover={budgetRollover}
+              onChangeBudgetRollover={setBudgetRollover}
             />
           </div>
         </div>
       </div>
       <MobileTabBar active={activeTab} onChange={setActiveTab} />
+      {deleteToast && (
+        <div className="delete-toast">
+          <span className="delete-toast-msg">Deleted <strong>{deleteToast.label}</strong></span>
+          <button className="delete-toast-undo" onClick={handleUndoDelete}>Undo</button>
+        </div>
+      )}
     </div>
   )
 }
