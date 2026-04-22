@@ -977,6 +977,68 @@ tbody tr:hover td {
 .editing-row td:first-child input { min-width: 110px; }
 .editing-row td:nth-child(4) input { max-width: 80px; }
 
+/* Desktop editing row — better layout */
+@media (min-width: 901px) {
+  .editing-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .editing-row td {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    flex: 1;
+    padding: 10px 8px;
+    border: none;
+  }
+
+  .editing-row td:first-child {
+    flex: 2;
+    flex-wrap: wrap;
+  }
+
+  .editing-row td:first-child input:first-child {
+    min-width: 110px;
+    flex: 0 0 auto;
+  }
+
+  .editing-row td:first-child input:nth-child(2) {
+    flex: 1;
+    min-width: 200px;
+  }
+
+  .editing-row td:first-child input:nth-child(3) {
+    flex: 1;
+    min-width: 150px;
+  }
+
+  .editing-row td:nth-child(2) {
+    flex: 1;
+  }
+
+  .editing-row td:nth-child(2) select {
+    width: 100%;
+  }
+
+  .editing-row td:nth-child(3) {
+    flex: 0.8;
+  }
+
+  .editing-row td:nth-child(3) input {
+    width: 100%;
+  }
+
+  .editing-row td:nth-child(3) input[placeholder="split"] {
+    max-width: 80px;
+  }
+
+  .editing-row td:nth-child(4) {
+    flex: 0 0 auto;
+  }
+}
+
 .empty {
   color: var(--text);
   font-size: 14px;
@@ -1324,16 +1386,16 @@ tbody tr:hover td {
 
   /* Swipe-to-delete */
   .swipe-delete-cell {
-    display: flex;
+    display: flex !important;
     position: absolute;
     right: 0;
-    top: 0;
-    bottom: 0;
+    top: 50%;
+    transform: translateY(-50%) translateX(100%);
+    transition: transform 0.22s ease;
     width: 80px;
+    height: auto;
     padding: 0 !important;
     border: none !important;
-    transform: translateX(100%);
-    transition: transform 0.22s ease;
     z-index: 2;
 
     button {
@@ -1350,22 +1412,22 @@ tbody tr:hover td {
       font-size: 11px;
       font-weight: 600;
       font-family: var(--sans);
-      padding: 0;
+      padding: 8px;
     }
   }
 
   /* Swipe-to-edit */
   .swipe-edit-cell {
-    display: flex;
+    display: flex !important;
     position: absolute;
     left: 0;
-    top: 0;
-    bottom: 0;
+    top: 50%;
+    transform: translateY(-50%) translateX(-100%);
+    transition: transform 0.22s ease;
     width: 80px;
+    height: auto;
     padding: 0 !important;
     border: none !important;
-    transform: translateX(-100%);
-    transition: transform 0.22s ease;
     z-index: 2;
 
     button {
@@ -1382,16 +1444,16 @@ tbody tr:hover td {
       font-size: 11px;
       font-weight: 600;
       font-family: var(--sans);
-      padding: 0;
+      padding: 8px;
     }
   }
 
   .row-swiped .swipe-delete-cell {
-    transform: translateX(0);
+    transform: translateY(-50%) translateX(0);
   }
 
   .row-swiped-edit .swipe-edit-cell {
-    transform: translateX(0);
+    transform: translateY(-50%) translateX(0);
   }
 
   /* Slide row content when swiped */
@@ -2842,7 +2904,6 @@ tbody tr:hover td {
   border-bottom: none;
   animation: none;
 }
-.date-group-label { }
 .date-group-total { font-weight: 700; opacity: 0.8; }
 
 /* ── Empty state ───────────────────────────────────────────── */

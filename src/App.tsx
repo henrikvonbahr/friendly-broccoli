@@ -3107,20 +3107,32 @@ export default function App() {
     deleteTimerRef.current = null
   }
 
+  async function executeDatabaseDelete(id: string, type: 'expense' | 'income') {
+    try {
+      if (type === 'expense') {
+        const { error } = await supabase.from('expenses').delete().eq('id', id)
+        if (error) console.error('Failed to delete expense:', error)
+      } else {
+        const { error } = await supabase.from('incomes').delete().eq('id', id)
+        if (error) console.error('Failed to delete income:', error)
+      }
+    } catch (err) {
+      console.error('Error deleting from database:', err)
+    }
+  }
+
   function showDeleteToast(id: string, type: 'expense' | 'income', item: Expense | Income, label: string) {
     // Commit any previous pending delete immediately using the ref (avoids stale state)
     if (pendingDeleteRef.current) {
       const p = pendingDeleteRef.current
-      if (p.type === 'expense') supabase.from('expenses').delete().eq('id', p.id)
-      else supabase.from('incomes').delete().eq('id', p.id)
+      executeDatabaseDelete(p.id, p.type)
     }
     commitPendingDelete()
     pendingDeleteRef.current = { id, type }
     setDeleteToast({ id, type, item, label })
     deleteTimerRef.current = setTimeout(() => {
       if (pendingDeleteRef.current?.id === id) {
-        if (type === 'expense') supabase.from('expenses').delete().eq('id', id)
-        else supabase.from('incomes').delete().eq('id', id)
+        executeDatabaseDelete(id, type)
         pendingDeleteRef.current = null
       }
       setDeleteToast(null)
