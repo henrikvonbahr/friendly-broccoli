@@ -71,16 +71,16 @@ interface ChartEntry {
 const CATEGORIES = ['Groceries', 'Food', 'Drinks', 'Transport', 'Housing', 'Entertainment', 'Health', 'Shopping', 'Savings', 'Other']
 
 const CATEGORY_COLORS: Record<string, string> = {
-  Groceries:     '#22c55e',
-  Food:          '#f97316',
-  Drinks:        '#06b6d4',
-  Transport:     '#3b82f6',
-  Housing:       '#8b5cf6',
-  Entertainment: '#ec4899',
-  Health:        '#14b8a6',
-  Shopping:      '#ef4444',
-  Savings:       '#6366f1',
-  Other:         '#94a3b8',
+  Groceries:     '#7B9266',
+  Food:          '#B86E4A',
+  Drinks:        '#8C6A4D',
+  Transport:     '#6B8499',
+  Housing:       '#8B7355',
+  Entertainment: '#A87C5A',
+  Health:        '#9C7A8E',
+  Shopping:      '#B58A7A',
+  Savings:       '#5C7A5E',
+  Other:         '#9C9A8E',
 }
 
 const CATEGORY_ICONS: Record<string, React.ReactNode> = {
