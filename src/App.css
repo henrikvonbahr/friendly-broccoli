@@ -1469,85 +1469,195 @@ tbody td {
   overflow: hidden;
 }
 
-.year-view-header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 14px 18px 12px;
-  border-bottom: 0.5px solid var(--border);
-}
-
-.year-view-header h2 {
+.year-view h2 {
   font-family: var(--font-display);
   font-size: 17px;
   font-weight: 500;
   letter-spacing: -0.3px;
   color: var(--text);
   margin: 0;
-}
-
-.year-month-grid {
-  display: grid;
-  grid-template-columns: repeat(4, 1fr);
-  gap: 0;
-}
-
-@media (min-width: 600px) {
-  .year-month-grid {
-    grid-template-columns: repeat(6, 1fr);
-  }
-}
-
-@media (min-width: 900px) {
-  .year-month-grid {
-    grid-template-columns: repeat(12, 1fr);
-  }
-}
-
-.year-month-cell {
-  padding: 10px 12px;
-  border-right: 0.5px solid var(--border);
+  padding: 14px 18px 12px;
   border-bottom: 0.5px solid var(--border);
-  cursor: pointer;
-  transition: background 0.1s;
-}
-
-.year-month-cell:hover { background: var(--surface-alt); }
-.year-month-cell.is-current { background: var(--sage-wash); }
-.year-month-cell.is-current .year-month-label { color: var(--sage); }
-
-.year-month-label {
-  font-size: 11px;
-  font-weight: 600;
-  color: var(--text-muted);
-  text-transform: uppercase;
-  letter-spacing: 0.5px;
-  margin-bottom: 6px;
-}
-
-.year-month-exp {
-  font-family: var(--font-mono);
-  font-size: 10.5px;
-  color: var(--expense);
-  font-variant-numeric: tabular-nums;
-}
-
-.year-month-inc {
-  font-family: var(--font-mono);
-  font-size: 10.5px;
-  color: var(--income);
-  font-variant-numeric: tabular-nums;
-  margin-top: 1px;
-}
-
-.year-month-cell.future .year-month-exp,
-.year-month-cell.future .year-month-inc {
-  color: var(--text-faint);
 }
 
 .year-chart {
   padding: 18px;
+  border-bottom: 0.5px solid var(--border);
+}
+
+.year-chart-legend {
+  display: flex;
+  gap: 16px;
+  justify-content: center;
+  margin-top: 10px;
+}
+
+.year-legend-item {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 11px;
+  color: var(--text-muted);
+}
+
+.year-legend-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 2px;
+  flex-shrink: 0;
+}
+
+.year-table {
+  display: flex;
+  flex-direction: column;
+}
+
+.year-header {
+  display: grid;
+  grid-template-columns: 56px 1fr 2fr 1fr 48px;
+  gap: 0;
+  padding: 8px 14px;
+  border-bottom: 0.5px solid var(--border);
+  background: var(--surface-alt);
+}
+
+.year-header span {
+  font-size: 10px;
+  font-weight: 600;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.6px;
+}
+
+.year-row {
+  display: grid;
+  grid-template-columns: 56px 1fr 2fr 1fr 48px;
+  gap: 0;
+  padding: 9px 14px;
+  border: none;
+  border-bottom: 0.5px solid var(--border);
+  background: transparent;
+  cursor: pointer;
+  font-family: var(--font-ui);
+  text-align: left;
+  transition: background 0.1s;
+  align-items: center;
+  width: 100%;
+}
+
+.year-row:last-child {
+  border-bottom: none;
+}
+
+.year-row:hover {
+  background: var(--surface-alt);
+}
+
+.year-row-selected {
+  background: var(--sage-wash) !important;
+}
+
+.year-row-current .year-month {
+  color: var(--sage);
+  font-weight: 700;
+}
+
+.year-row-future {
+  opacity: 0.4;
+}
+
+.year-month {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text-muted);
+}
+
+.year-income {
+  font-family: var(--font-mono);
+  font-size: 12px;
+  color: var(--income);
+  font-variant-numeric: tabular-nums;
+}
+
+.year-expense-cell {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.year-bar-wrap {
+  flex: 1;
+  height: 6px;
+  background: var(--surface-alt);
+  border-radius: 3px;
+  overflow: hidden;
+}
+
+.year-bar {
+  height: 100%;
+  background: var(--expense);
+  border-radius: 3px;
+  transition: width 0.3s ease;
+}
+
+.year-expense-val {
+  font-family: var(--font-mono);
+  font-size: 12px;
+  color: var(--expense);
+  font-variant-numeric: tabular-nums;
+  min-width: 36px;
+  text-align: right;
+}
+
+.year-net {
+  font-family: var(--font-mono);
+  font-size: 12px;
+  font-variant-numeric: tabular-nums;
+}
+
+.year-net-pos { color: var(--income); }
+.year-net-neg { color: var(--expense); }
+
+.year-rate-col {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  color: var(--text-muted);
+  text-align: right;
+}
+
+.year-rate {
+  font-variant-numeric: tabular-nums;
+}
+
+.year-empty {
+  font-size: 12px;
+  color: var(--text-faint);
+}
+
+.year-total-row {
+  display: grid;
+  grid-template-columns: 56px 1fr 2fr 1fr 48px;
+  gap: 0;
+  padding: 10px 14px;
   border-top: 0.5px solid var(--border);
+  background: var(--surface-alt);
+  align-items: center;
+}
+
+.year-total-row .year-month {
+  font-weight: 700;
+  color: var(--text);
+}
+
+@media (max-width: 480px) {
+  .year-header,
+  .year-row,
+  .year-total-row {
+    grid-template-columns: 44px 1fr 1.5fr 1fr;
+  }
+  .year-rate-col {
+    display: none;
+  }
 }
 
 /* ── Plan tab ─────────────────────────────────────────────── */
@@ -2291,24 +2401,8 @@ tbody td {
   opacity: 0.5;
 }
 
-.achievement-glyph {
-  width: 26px;
-  height: 26px;
-  border-radius: 6px;
-  background: var(--sage-soft);
-  color: var(--sage);
-  font-size: 12px;
-  font-weight: 700;
-  font-family: var(--font-ui);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  flex-shrink: 0;
-}
-
-.achievement-locked .achievement-glyph {
-  background: var(--surface-alt);
-  color: var(--text-faint);
+.achievement-icon {
+  font-size: 20px;
 }
 
 .achievement-name {
@@ -2528,187 +2622,4 @@ tbody td {
   letter-spacing: -0.3px;
   color: var(--text);
   margin: 0;
-}
-
-/* ── Expense filter chips + KPI strip ────────────────────── */
-
-.filter-chips {
-  display: flex;
-  gap: 6px;
-  padding: 8px 16px 0;
-  flex-wrap: wrap;
-}
-
-.filter-chip {
-  padding: 4px 12px;
-  border-radius: 20px;
-  border: 0.5px solid var(--border);
-  background: transparent;
-  color: var(--text-muted);
-  font-size: 12px;
-  font-weight: 500;
-  font-family: var(--font-ui);
-  cursor: pointer;
-  transition: background 0.1s, color 0.1s, border-color 0.1s;
-}
-
-.filter-chip:hover {
-  background: var(--surface-alt);
-  color: var(--text);
-}
-
-.filter-chip-active {
-  background: var(--sage-soft);
-  border-color: color-mix(in srgb, var(--sage) 40%, transparent);
-  color: var(--sage);
-}
-
-.expense-kpi-strip {
-  display: flex;
-  gap: 0;
-  border-bottom: 0.5px solid var(--border);
-  margin-top: 10px;
-}
-
-.expense-kpi {
-  flex: 1;
-  padding: 10px 16px;
-  display: flex;
-  flex-direction: column;
-  gap: 2px;
-}
-
-.expense-kpi + .expense-kpi {
-  border-left: 0.5px solid var(--border);
-}
-
-.expense-kpi-label {
-  font-size: 10px;
-  font-weight: 600;
-  color: var(--text-muted);
-  text-transform: uppercase;
-  letter-spacing: 0.6px;
-}
-
-.expense-kpi-value {
-  font-family: var(--font-display);
-  font-size: 16px;
-  font-weight: 500;
-  color: var(--text);
-  letter-spacing: -0.3px;
-  font-variant-numeric: tabular-nums;
-}
-
-/* ── Plan segmented control ───────────────────────────────── */
-
-.plan-tab {
-  display: flex;
-  flex-direction: column;
-  gap: 14px;
-}
-
-.plan-seg-control {
-  display: flex;
-  background: var(--surface-alt);
-  border: 0.5px solid var(--border);
-  border-radius: 10px;
-  padding: 3px;
-  gap: 2px;
-}
-
-.plan-seg-btn {
-  flex: 1;
-  padding: 7px 0;
-  border: none;
-  border-radius: 8px;
-  background: transparent;
-  color: var(--text-muted);
-  font-size: 13px;
-  font-weight: 500;
-  font-family: var(--font-ui);
-  cursor: pointer;
-  transition: background 0.12s, color 0.12s;
-}
-
-.plan-seg-btn:hover {
-  color: var(--text);
-}
-
-.plan-seg-active {
-  background: var(--surface);
-  color: var(--text);
-  border: 0.5px solid var(--border);
-}
-
-/* ── Recurring next date chip ─────────────────────────────── */
-
-.recurring-next {
-  font-size: 11px;
-  color: var(--text-faint);
-  font-family: var(--font-mono);
-}
-
-/* ── Income summary card ──────────────────────────────────── */
-
-.income-summary-card {
-  padding: 16px 18px;
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
-}
-
-.income-summary-main {
-  display: flex;
-  flex-direction: column;
-  gap: 2px;
-  padding-bottom: 10px;
-  border-bottom: 0.5px solid var(--border);
-}
-
-.income-summary-label {
-  font-size: 10px;
-  font-weight: 600;
-  color: var(--text-muted);
-  text-transform: uppercase;
-  letter-spacing: 0.6px;
-}
-
-.income-summary-amount {
-  font-family: var(--font-display);
-  font-size: 26px;
-  font-weight: 500;
-  color: var(--income);
-  letter-spacing: -0.6px;
-  font-variant-numeric: tabular-nums;
-}
-
-.income-summary-sub {
-  font-size: 12px;
-  color: var(--text-muted);
-}
-
-.income-source-kpi {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-}
-
-.income-source-dot {
-  width: 8px;
-  height: 8px;
-  border-radius: 50%;
-  flex-shrink: 0;
-}
-
-.income-source-name {
-  font-size: 13px;
-  color: var(--text-muted);
-  flex: 1;
-}
-
-.income-source-amount {
-  font-family: var(--font-mono);
-  font-size: 13px;
-  font-weight: 500;
-  color: var(--text);
 }

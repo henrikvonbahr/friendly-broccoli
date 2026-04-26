@@ -99,12 +99,12 @@ const CATEGORY_ICONS: Record<string, React.ReactNode> = {
 const INCOME_SOURCES = ['Salary', 'Freelance', 'Investment', 'Gift', 'Rental', 'Other']
 
 const INCOME_SOURCE_COLORS: Record<string, string> = {
-  Salary:     '#7B9266',
-  Freelance:  '#6B8499',
-  Investment: '#8B7355',
-  Gift:       '#9C7A8E',
-  Rental:     '#B58A7A',
-  Other:      '#9C9A8E',
+  Salary:     '#10b981',
+  Freelance:  '#0ea5e9',
+  Investment: '#f59e0b',
+  Gift:       '#ec4899',
+  Rental:     '#a78bfa',
+  Other:      '#94a3b8',
 }
 
 const HOME_CURRENCY = 'SEK'
@@ -396,8 +396,12 @@ function formatYTick(value: number): string {
 }
 
 function SpendingChart({ data }: SpendingChartProps) {
-  const accentColor = useMemo(
-    () => getComputedStyle(document.documentElement).getPropertyValue('--accent').trim() || '#aa3bff',
+  const expenseColor = useMemo(
+    () => getComputedStyle(document.documentElement).getPropertyValue('--expense').trim() || '#A8553D',
+    []
+  )
+  const incomeColor = useMemo(
+    () => getComputedStyle(document.documentElement).getPropertyValue('--income').trim() || '#5C7A5E',
     []
   )
   const maxValue = useMemo(() => Math.max(...data.map(d => Math.max(d.expenses, d.income)), 0), [data])
@@ -426,15 +430,15 @@ function SpendingChart({ data }: SpendingChartProps) {
             width={yAxisWidth}
             tickCount={4}
           />
-          <Tooltip content={<ChartTooltip />} cursor={{ fill: 'var(--accent-bg)' }} />
+          <Tooltip content={<ChartTooltip />} cursor={{ fill: 'var(--surface-alt)' }} />
           <Bar dataKey="income" name="income" radius={[4, 4, 0, 0]}>
             {data.map((entry, i) => (
-              <Cell key={i} fill={entry.isCurrent ? '#10b981' : '#10b98155'} />
+              <Cell key={i} fill={entry.isCurrent ? incomeColor : `${incomeColor}55`} />
             ))}
           </Bar>
           <Bar dataKey="expenses" name="expenses" radius={[4, 4, 0, 0]}>
             {data.map((entry, i) => (
-              <Cell key={i} fill={entry.isCurrent ? accentColor : `${accentColor}55`} />
+              <Cell key={i} fill={entry.isCurrent ? expenseColor : `${expenseColor}55`} />
             ))}
           </Bar>
         </BarChart>
@@ -536,7 +540,7 @@ function CategoryPieChart({ expenses }: CategoryPieChartProps) {
 
 interface AchievementDef {
   id: string
-  glyph: string
+  icon: string
   name: string
   description: string
   xp: number
@@ -545,27 +549,26 @@ interface AchievementDef {
 
 const ACHIEVEMENT_DEFS: AchievementDef[] = [
   // Getting Started
-  { id: 'first_entry',       glyph: 'A', name: 'First Entry',       description: 'Log your first transaction',                         xp: 10,  category: 'Getting Started' },
-  { id: 'month_one',         glyph: 'B', name: 'Month One',         description: 'Tracked a full month',                               xp: 30,  category: 'Getting Started' },
+  { id: 'first_entry',       icon: '🌱', name: 'First Entry',       description: 'Log your first expense',                              xp: 25,  category: 'Getting Started' },
+  { id: 'month_one',         icon: '📅', name: 'Month One',         description: 'Track both income and expenses in the same month',    xp: 50,  category: 'Getting Started' },
   // Savings
-  { id: 'first_surplus',     glyph: 'C', name: 'First Surplus',     description: 'Spent less than you earned',                         xp: 20,  category: 'Savings' },
-  { id: 'ten_percent',       glyph: 'D', name: '10% Club',          description: 'Saved 10% of monthly income',                        xp: 40,  category: 'Savings' },
-  { id: 'super_saver',       glyph: 'E', name: 'Super Saver',       description: 'Saved 25% in a single month',                        xp: 80,  category: 'Savings' },
-  { id: 'on_a_roll',         glyph: 'F', name: 'On a Roll',         description: '3 months in a row of saving',                        xp: 60,  category: 'Savings' },
-  { id: 'consistent_saver',  glyph: 'G', name: 'Consistent Saver',  description: '6 months saving streak',                             xp: 120, category: 'Savings' },
+  { id: 'first_surplus',     icon: '💰', name: 'First Surplus',     description: 'End a month with income greater than expenses',       xp: 100, category: 'Savings' },
+  { id: 'ten_percent',       icon: '🟢', name: '10% Club',          description: 'Save at least 10% of income in a month',             xp: 75,  category: 'Savings' },
+  { id: 'super_saver',       icon: '⭐', name: 'Super Saver',       description: 'Save at least 20% of income in a month',             xp: 150, category: 'Savings' },
+  { id: 'on_a_roll',         icon: '🔥', name: 'On a Roll',         description: 'Positive savings 3 months in a row',                 xp: 200, category: 'Savings' },
+  { id: 'consistent_saver',  icon: '🏆', name: 'Consistent Saver', description: 'Positive savings 6 months in a row',                 xp: 400, category: 'Savings' },
   // Budgeting
-  { id: 'budget_setter',     glyph: 'H', name: 'Budget Setter',     description: 'Set your first budget',                              xp: 20,  category: 'Budgeting' },
-  { id: 'budget_keeper',     glyph: 'I', name: 'Budget Keeper',     description: 'Stayed under budget once',                           xp: 40,  category: 'Budgeting' },
-  { id: 'perfect_month',     glyph: 'J', name: 'Perfect Month',     description: 'All categories under budget',                        xp: 80,  category: 'Budgeting' },
-  { id: 'budget_streak',     glyph: 'K', name: 'Budget Streak',     description: '3 perfect months in a row',                          xp: 120, category: 'Budgeting' },
+  { id: 'budget_setter',     icon: '📊', name: 'Budget Setter',     description: 'Set budgets for 3 or more categories',               xp: 50,  category: 'Budgeting' },
+  { id: 'budget_keeper',     icon: '✅', name: 'Budget Keeper',     description: 'Stay under your total budget for a full month',      xp: 100, category: 'Budgeting' },
+  { id: 'perfect_month',     icon: '🎯', name: 'Perfect Month',     description: 'Every category stays under budget in a month',       xp: 200, category: 'Budgeting' },
+  { id: 'budget_streak',     icon: '🔄', name: 'Budget Streak',     description: 'Stay under budget 3 months in a row',                xp: 300, category: 'Budgeting' },
   // Planning
-  { id: 'autopilot',         glyph: 'L', name: 'Autopilot',         description: 'Added your first recurring',                         xp: 20,  category: 'Planning' },
-  { id: 'planner_pro',       glyph: 'M', name: 'Planner Pro',       description: '5 recurring + 3 budgets active',                     xp: 60,  category: 'Planning' },
+  { id: 'autopilot',         icon: '🔁', name: 'Autopilot',         description: 'Set up your first recurring expense',                xp: 50,  category: 'Planning' },
+  { id: 'planner_pro',       icon: '📋', name: 'Planner Pro',       description: 'Have 3 or more active recurring expenses',           xp: 100, category: 'Planning' },
   // Milestones
-  { id: 'three_months',      glyph: 'N', name: '3 Months Strong',   description: 'Tracked 3 months continuously',                      xp: 60,  category: 'Milestones' },
-  { id: 'half_year',         glyph: 'O', name: 'Half Year',         description: 'Tracked 6 months continuously',                      xp: 120, category: 'Milestones' },
-  { id: 'year_round',        glyph: 'P', name: 'Year Round',        description: 'Tracked a full year',                                xp: 240, category: 'Milestones' },
-  { id: 'goal_reached',      glyph: 'Q', name: 'Goal Reached',      description: 'Completed a savings goal',                           xp: 80,  category: 'Milestones' },
+  { id: 'three_months',      icon: '🌊', name: '3 Months Strong',   description: 'Track your finances for 3 months',                   xp: 100, category: 'Milestones' },
+  { id: 'half_year',         icon: '🏄', name: 'Half Year',         description: 'Track your finances for 6 months',                   xp: 200, category: 'Milestones' },
+  { id: 'year_round',        icon: '🧗', name: 'Year Round',        description: 'Track your finances for 12 months',                  xp: 500, category: 'Milestones' },
 ]
 
 interface LevelDef {
@@ -575,11 +578,12 @@ interface LevelDef {
 }
 
 const LEVELS: LevelDef[] = [
-  { name: 'Beginner',   minXP: 0,    color: '#9C9A8E' },
-  { name: 'Saver',      minXP: 100,  color: '#7B9266' },
-  { name: 'Planner',    minXP: 300,  color: '#6B8499' },
-  { name: 'Budgeter',   minXP: 600,  color: '#8B7355' },
-  { name: 'Strategist', minXP: 1000, color: '#5C7A5E' },
+  { name: 'Beginner',  minXP: 0,    color: '#94a3b8' },
+  { name: 'Saver',     minXP: 100,  color: '#10b981' },
+  { name: 'Planner',   minXP: 300,  color: '#3b82f6' },
+  { name: 'Budgeter',  minXP: 600,  color: '#f59e0b' },
+  { name: 'Investor',  minXP: 1000, color: '#8b5cf6' },
+  { name: 'Sage',      minXP: 2000, color: '#4f7c62' },
 ]
 
 function computeAchievements(
@@ -587,7 +591,6 @@ function computeAchievements(
   incomes: Income[],
   budgets: Record<string, number>,
   recurringExpenses: RecurringExpense[],
-  hasCompletedGoal = false,
 ): { unlocked: Set<string>; totalXP: number; level: LevelDef; nextLevel: LevelDef | null; progressPct: number; trackedMonths: number; bestSavingsRate: number | null; longestSavingsStreak: number } {
   // Build a sorted list of unique YYYY-MM strings that have expense entries
   const monthSet = new Set<string>()
@@ -644,11 +647,10 @@ function computeAchievements(
   check('perfect_month',    months.some(ym => statsMap[ym].perfectMonth))
   check('budget_streak',    longestRun(ym => statsMap[ym].underBudget) >= 3)
   check('autopilot',        recurringExpenses.length > 0)
-  check('planner_pro',      recurringExpenses.filter(r => r.active).length >= 5 && Object.values(budgets).filter(v => v > 0).length >= 3)
+  check('planner_pro',      recurringExpenses.filter(r => r.active).length >= 3)
   check('three_months',     trackedMonths >= 3)
   check('half_year',        trackedMonths >= 6)
   check('year_round',       trackedMonths >= 12)
-  check('goal_reached',     hasCompletedGoal)
 
   const totalXP = ACHIEVEMENT_DEFS.filter(a => unlocked.has(a.id)).reduce((s, a) => s + a.xp, 0)
   const level = [...LEVELS].reverse().find(l => totalXP >= l.minXP) ?? LEVELS[0]
@@ -1215,12 +1217,10 @@ type EditDraft = {
   split_count: number | null
 }
 
-type ExpenseChip = 'All' | 'Recurring' | 'Foreign'
-
 function ExpenseList({ expenses, onDelete, onEdit }: ExpenseListProps) {
   const [search, setSearch] = useState('')
-  const [chip, setChip] = useState<ExpenseChip>('All')
   const [filterCategory, setFilterCategory] = useState('All')
+  const [filterTag, setFilterTag] = useState('All')
   const [sortDesc, setSortDesc] = useState(true)
   const [editingId, setEditingId] = useState<string | null>(null)
   const [editDraft, setEditDraft] = useState<EditDraft>({ date: '', description: '', category: '', amount: '', tags: '', split_count: null })
@@ -1272,21 +1272,13 @@ function ExpenseList({ expenses, onDelete, onEdit }: ExpenseListProps) {
     touchItemId.current = null
   }
 
+  const allTags = [...new Set(expenses.flatMap(e => e.tags ?? []))].sort()
+
   const filtered = [...expenses]
     .filter(e => filterCategory === 'All' || e.category === filterCategory)
-    .filter(e => !search || e.description.toLowerCase().includes(search.toLowerCase()))
-    .filter(e => {
-      if (chip === 'Recurring') return !!e.recurring_id
-      if (chip === 'Foreign') return !!e.currency && e.currency !== 'SEK'
-      return true
-    })
+    .filter(e => e.description.toLowerCase().includes(search.toLowerCase()))
+    .filter(e => filterTag === 'All' || (e.tags ?? []).includes(filterTag))
     .sort((a, b) => sortDesc ? b.date.localeCompare(a.date) : a.date.localeCompare(b.date))
-
-  const totalFiltered = filtered.reduce((s, e) => s + e.amount, 0)
-  const uniqueDays = new Set(filtered.map(e => e.date)).size
-  const dailyAvg = uniqueDays > 0 ? totalFiltered / uniqueDays : 0
-
-  const CHIPS: ExpenseChip[] = ['All', 'Recurring', 'Foreign']
 
   return (
     <div className="expense-list card">
@@ -1312,24 +1304,17 @@ function ExpenseList({ expenses, onDelete, onEdit }: ExpenseListProps) {
           <option value="All">All categories</option>
           {CATEGORIES.map(c => <option key={c}>{c}</option>)}
         </select>
+        {allTags.length > 0 && (
+          <select
+            className="filter-category"
+            value={filterTag}
+            onChange={e => setFilterTag(e.target.value)}
+          >
+            <option value="All">All tags</option>
+            {allTags.map(t => <option key={t}>{t}</option>)}
+          </select>
+        )}
       </div>
-      <div className="filter-chips">
-        {CHIPS.map(c => (
-          <button key={c} className={`filter-chip${chip === c ? ' filter-chip-active' : ''}`} onClick={() => setChip(c)}>{c}</button>
-        ))}
-      </div>
-      {filtered.length > 0 && (
-        <div className="expense-kpi-strip">
-          <div className="expense-kpi">
-            <span className="expense-kpi-label">Total spent</span>
-            <span className="expense-kpi-value">{fmt(totalFiltered)}</span>
-          </div>
-          <div className="expense-kpi">
-            <span className="expense-kpi-label">Daily avg</span>
-            <span className="expense-kpi-value">{fmt(dailyAvg)}</span>
-          </div>
-        </div>
-      )}
       {filtered.length === 0 ? (
         <div className="empty-state">
           {expenses.length === 0 ? (
@@ -1966,34 +1951,6 @@ function BudgetsSection({ expenses, monthIncomes, budgets, onSetBudget, currentM
   )
 }
 
-function nextOccurrence(rec: RecurringExpense): Date {
-  const today = new Date(); today.setHours(0, 0, 0, 0)
-  const start = new Date(rec.start_date + 'T00:00:00')
-  if (rec.frequency === 'monthly') {
-    const day = start.getDate()
-    let d = new Date(today.getFullYear(), today.getMonth(), day)
-    if (d <= today) d = new Date(today.getFullYear(), today.getMonth() + 1, day)
-    return d
-  }
-  if (rec.frequency === 'yearly') {
-    let d = new Date(today.getFullYear(), start.getMonth(), start.getDate())
-    if (d <= today) d = new Date(today.getFullYear() + 1, start.getMonth(), start.getDate())
-    return d
-  }
-  if (rec.frequency === 'weekly') {
-    const d = new Date(start)
-    while (d <= today) d.setDate(d.getDate() + 7)
-    return d
-  }
-  // daily
-  const d = new Date(today); d.setDate(d.getDate() + 1); return d
-}
-
-function fmtNextDate(d: Date): string {
-  const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec']
-  return `${months[d.getMonth()]} ${d.getDate()}`
-}
-
 const FREQUENCY_LABELS: Record<string, string> = {
   daily: 'Daily',
   weekly: 'Weekly',
@@ -2099,7 +2056,6 @@ function RecurringSection({ recurring, onAdd, onDelete, onToggle }: RecurringSec
                 <span className="recurring-meta">
                   <span className="badge" style={{ color: CATEGORY_COLORS[rec.category] ?? '#94a3b8', background: `${CATEGORY_COLORS[rec.category] ?? '#94a3b8'}18`, borderColor: `${CATEGORY_COLORS[rec.category] ?? '#94a3b8'}44` }}>{CATEGORY_ICONS[rec.category]}{rec.category}</span>
                   <span className="recurring-freq">{FREQUENCY_LABELS[rec.frequency]}</span>
-                  {rec.active && <span className="recurring-next">next {fmtNextDate(nextOccurrence(rec))}</span>}
                 </span>
               </div>
               <div className="recurring-amount-col">
@@ -2268,13 +2224,13 @@ function YearView({ expenses, incomes, currentYear, currentMonth, onSelectMonth,
             <XAxis dataKey="label" axisLine={false} tickLine={false} tick={{ fontSize: 12, fill: 'var(--text)' }} />
             <YAxis tickFormatter={formatYTick} axisLine={false} tickLine={false} tick={{ fontSize: 12, fill: 'var(--text)' }} width={36} tickCount={4} />
             <Tooltip content={<ChartTooltip />} cursor={{ stroke: 'var(--border)', strokeWidth: 1 }} />
-            <Line type="monotone" dataKey="income" name="income" stroke="#10b981" strokeWidth={2} dot={false} connectNulls={false} activeDot={{ r: 4, fill: '#10b981' }} />
-            <Line type="monotone" dataKey="expenses" name="expenses" stroke="var(--accent)" strokeWidth={2} dot={false} connectNulls={false} activeDot={{ r: 4, fill: 'var(--accent)' }} />
+            <Line type="monotone" dataKey="income" name="income" stroke="var(--income)" strokeWidth={2} dot={false} connectNulls={false} activeDot={{ r: 4, fill: 'var(--income)' }} />
+            <Line type="monotone" dataKey="expenses" name="expenses" stroke="var(--expense)" strokeWidth={2} dot={false} connectNulls={false} activeDot={{ r: 4, fill: 'var(--expense)' }} />
           </LineChart>
         </ResponsiveContainer>
         <div className="year-chart-legend">
-          <span className="year-legend-item"><span className="year-legend-dot" style={{ background: '#10b981' }} />Income</span>
-          <span className="year-legend-item"><span className="year-legend-dot" style={{ background: 'var(--accent)' }} />Expenses</span>
+          <span className="year-legend-item"><span className="year-legend-dot" style={{ background: 'var(--income)' }} />Income</span>
+          <span className="year-legend-item"><span className="year-legend-dot" style={{ background: 'var(--expense)' }} />Expenses</span>
         </div>
       </div>
       <div className="year-table">
@@ -2557,19 +2513,9 @@ interface ProfileTabProps {
 }
 
 function ProfileTab({ expenses, incomes, budgets, recurringExpenses, session, guestMode: _guestMode, periodStartDay, onChangePeriodStartDay, darkMode, onChangeDarkMode, budgetRollover, onChangeBudgetRollover }: ProfileTabProps) {
-  const [goals, setGoals] = useState<Goal[]>([])
-  useEffect(() => {
-    if (!session) { setGoals([]); return }
-    supabase.from('goals').select('*').then(({ data, error }: { data: Goal[] | null; error: unknown }) => {
-      if (!error) setGoals(data ?? [])
-    })
-  }, [session])
-
-  const hasCompletedGoal = goals.some((g: Goal) => g.current_amount >= g.target_amount)
-
   const { unlocked, totalXP, level, nextLevel, progressPct, trackedMonths, bestSavingsRate, longestSavingsStreak } = useMemo(
-    () => computeAchievements(expenses, incomes, budgets, recurringExpenses, hasCompletedGoal),
-    [expenses, incomes, budgets, recurringExpenses, hasCompletedGoal]
+    () => computeAchievements(expenses, incomes, budgets, recurringExpenses),
+    [expenses, incomes, budgets, recurringExpenses]
   )
 
   const email = session?.user?.email ?? 'Guest'
@@ -2699,7 +2645,7 @@ function ProfileTab({ expenses, incomes, budgets, recurringExpenses, session, gu
                 const done = unlocked.has(a.id)
                 return (
                   <div key={a.id} className={`achievement-item${done ? ' achievement-unlocked' : ' achievement-locked'}`} title={a.description}>
-                    <span className="achievement-glyph">{a.glyph}</span>
+                    <span className="achievement-icon">{a.icon}</span>
                     <span className="achievement-name">{a.name}</span>
                     <span className="achievement-desc">{a.description}</span>
                     <span className="achievement-xp">+{a.xp} XP</span>
@@ -2889,58 +2835,6 @@ function GoalsTab({ session, guestMode }: GoalsTabProps) {
             )
           })}
         </div>
-      )}
-    </div>
-  )
-}
-
-interface PlanTabProps {
-  expenses: Expense[]
-  monthIncomes: Income[]
-  budgets: Record<string, number>
-  onSetBudget: (category: string, amount: number) => void
-  currentMonth: MonthState
-  budgetRollover: boolean
-  recurringExpenses: RecurringExpense[]
-  onAddRecurring: (rec: Omit<RecurringExpense, 'id' | 'user_id' | 'created_at'>) => Promise<void>
-  onDeleteRecurring: (id: string) => Promise<void>
-  onToggleRecurring: (id: string, active: boolean) => Promise<void>
-  session: Session | null
-  guestMode: boolean
-}
-
-type PlanSubTab = 'Budgets' | 'Recurring' | 'Goals'
-
-function PlanTab({ expenses, monthIncomes, budgets, onSetBudget, currentMonth, budgetRollover, recurringExpenses, onAddRecurring, onDeleteRecurring, onToggleRecurring, session, guestMode }: PlanTabProps) {
-  const [subTab, setSubTab] = useState<PlanSubTab>('Budgets')
-  const tabs: PlanSubTab[] = ['Budgets', 'Recurring', 'Goals']
-  return (
-    <div className="plan-tab">
-      <div className="plan-seg-control">
-        {tabs.map(t => (
-          <button key={t} className={`plan-seg-btn${subTab === t ? ' plan-seg-active' : ''}`} onClick={() => setSubTab(t)}>{t}</button>
-        ))}
-      </div>
-      {subTab === 'Budgets' && (
-        <BudgetsSection
-          expenses={expenses}
-          monthIncomes={monthIncomes}
-          budgets={budgets}
-          onSetBudget={onSetBudget}
-          currentMonth={currentMonth}
-          budgetRollover={budgetRollover}
-        />
-      )}
-      {subTab === 'Recurring' && (
-        <RecurringSection
-          recurring={recurringExpenses}
-          onAdd={onAddRecurring}
-          onDelete={onDeleteRecurring}
-          onToggle={onToggleRecurring}
-        />
-      )}
-      {subTab === 'Goals' && (
-        <GoalsTab session={session} guestMode={guestMode} />
       )}
     </div>
   )
@@ -3452,45 +3346,27 @@ export default function App() {
                 <ExpenseList expenses={monthExpenses} onDelete={handleDeleteExpense} onEdit={handleEditExpense} />
               </div>
               <div className={`tab-section${activeTab !== 'income' ? ' mobile-hidden' : ''}`}>
-                {monthIncomes.length > 0 && (
-                  <div className="income-summary-card card">
-                    <div className="income-summary-main">
-                      <span className="income-summary-label">Income this period</span>
-                      <span className="income-summary-amount">{fmt(monthIncomes.reduce((s, i) => s + i.amount, 0))}</span>
-                      <span className="income-summary-sub">across {monthIncomes.length} {monthIncomes.length === 1 ? 'source' : 'sources'}</span>
-                    </div>
-                    {(() => {
-                      const bySource = monthIncomes.reduce<Record<string, number>>((acc, i) => { acc[i.source] = (acc[i.source] ?? 0) + i.amount; return acc }, {})
-                      return Object.entries(bySource).sort((a, b) => b[1] - a[1]).map(([source, amount]) => (
-                        <div key={source} className="income-source-kpi">
-                          <span className="income-source-dot" style={{ background: INCOME_SOURCE_COLORS[source] ?? '#9C9A8E' }} />
-                          <span className="income-source-name">{source}</span>
-                          <span className="income-source-amount">{fmt(amount)}</span>
-                        </div>
-                      ))
-                    })()}
-                  </div>
-                )}
                 <AddIncomeForm onAdd={handleAddIncome} defaultDate={defaultDate} />
                 <IncomeList incomes={monthIncomes} onDelete={handleDeleteIncome} onEdit={handleEditIncome} />
               </div>
             </main>
           </div>
           <div className={`plan-wrapper${activeTab !== 'plan' ? ' mobile-hidden' : ''}`}>
-            <PlanTab
+            <BudgetsSection
               expenses={expenses}
               monthIncomes={monthIncomes}
               budgets={budgets}
               onSetBudget={setBudgetForCategory}
               currentMonth={currentMonth}
               budgetRollover={budgetRollover}
-              recurringExpenses={recurringExpenses}
-              onAddRecurring={handleAddRecurring}
-              onDeleteRecurring={handleDeleteRecurring}
-              onToggleRecurring={handleToggleRecurring}
-              session={session}
-              guestMode={guestMode}
             />
+            <RecurringSection
+              recurring={recurringExpenses}
+              onAdd={handleAddRecurring}
+              onDelete={handleDeleteRecurring}
+              onToggle={handleToggleRecurring}
+            />
+            <GoalsTab session={session} guestMode={guestMode} />
           </div>
           <div className={`profile-wrapper${activeTab !== 'profile' ? ' mobile-hidden' : ''}`}>
             <ProfileTab
