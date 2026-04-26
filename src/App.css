@@ -2291,8 +2291,24 @@ tbody td {
   opacity: 0.5;
 }
 
-.achievement-icon {
-  font-size: 20px;
+.achievement-glyph {
+  width: 26px;
+  height: 26px;
+  border-radius: 6px;
+  background: var(--sage-soft);
+  color: var(--sage);
+  font-size: 12px;
+  font-weight: 700;
+  font-family: var(--font-ui);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.achievement-locked .achievement-glyph {
+  background: var(--surface-alt);
+  color: var(--text-faint);
 }
 
 .achievement-name {
@@ -2512,4 +2528,187 @@ tbody td {
   letter-spacing: -0.3px;
   color: var(--text);
   margin: 0;
+}
+
+/* ── Expense filter chips + KPI strip ────────────────────── */
+
+.filter-chips {
+  display: flex;
+  gap: 6px;
+  padding: 8px 16px 0;
+  flex-wrap: wrap;
+}
+
+.filter-chip {
+  padding: 4px 12px;
+  border-radius: 20px;
+  border: 0.5px solid var(--border);
+  background: transparent;
+  color: var(--text-muted);
+  font-size: 12px;
+  font-weight: 500;
+  font-family: var(--font-ui);
+  cursor: pointer;
+  transition: background 0.1s, color 0.1s, border-color 0.1s;
+}
+
+.filter-chip:hover {
+  background: var(--surface-alt);
+  color: var(--text);
+}
+
+.filter-chip-active {
+  background: var(--sage-soft);
+  border-color: color-mix(in srgb, var(--sage) 40%, transparent);
+  color: var(--sage);
+}
+
+.expense-kpi-strip {
+  display: flex;
+  gap: 0;
+  border-bottom: 0.5px solid var(--border);
+  margin-top: 10px;
+}
+
+.expense-kpi {
+  flex: 1;
+  padding: 10px 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.expense-kpi + .expense-kpi {
+  border-left: 0.5px solid var(--border);
+}
+
+.expense-kpi-label {
+  font-size: 10px;
+  font-weight: 600;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.6px;
+}
+
+.expense-kpi-value {
+  font-family: var(--font-display);
+  font-size: 16px;
+  font-weight: 500;
+  color: var(--text);
+  letter-spacing: -0.3px;
+  font-variant-numeric: tabular-nums;
+}
+
+/* ── Plan segmented control ───────────────────────────────── */
+
+.plan-tab {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.plan-seg-control {
+  display: flex;
+  background: var(--surface-alt);
+  border: 0.5px solid var(--border);
+  border-radius: 10px;
+  padding: 3px;
+  gap: 2px;
+}
+
+.plan-seg-btn {
+  flex: 1;
+  padding: 7px 0;
+  border: none;
+  border-radius: 8px;
+  background: transparent;
+  color: var(--text-muted);
+  font-size: 13px;
+  font-weight: 500;
+  font-family: var(--font-ui);
+  cursor: pointer;
+  transition: background 0.12s, color 0.12s;
+}
+
+.plan-seg-btn:hover {
+  color: var(--text);
+}
+
+.plan-seg-active {
+  background: var(--surface);
+  color: var(--text);
+  border: 0.5px solid var(--border);
+}
+
+/* ── Recurring next date chip ─────────────────────────────── */
+
+.recurring-next {
+  font-size: 11px;
+  color: var(--text-faint);
+  font-family: var(--font-mono);
+}
+
+/* ── Income summary card ──────────────────────────────────── */
+
+.income-summary-card {
+  padding: 16px 18px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.income-summary-main {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding-bottom: 10px;
+  border-bottom: 0.5px solid var(--border);
+}
+
+.income-summary-label {
+  font-size: 10px;
+  font-weight: 600;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.6px;
+}
+
+.income-summary-amount {
+  font-family: var(--font-display);
+  font-size: 26px;
+  font-weight: 500;
+  color: var(--income);
+  letter-spacing: -0.6px;
+  font-variant-numeric: tabular-nums;
+}
+
+.income-summary-sub {
+  font-size: 12px;
+  color: var(--text-muted);
+}
+
+.income-source-kpi {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.income-source-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.income-source-name {
+  font-size: 13px;
+  color: var(--text-muted);
+  flex: 1;
+}
+
+.income-source-amount {
+  font-family: var(--font-mono);
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--text);
 }
