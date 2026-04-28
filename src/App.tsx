@@ -99,12 +99,12 @@ const CATEGORY_ICONS: Record<string, React.ReactNode> = {
 const INCOME_SOURCES = ['Salary', 'Freelance', 'Investment', 'Gift', 'Rental', 'Other']
 
 const INCOME_SOURCE_COLORS: Record<string, string> = {
-  Salary:     '#10b981',
-  Freelance:  '#0ea5e9',
-  Investment: '#f59e0b',
-  Gift:       '#ec4899',
-  Rental:     '#a78bfa',
-  Other:      '#94a3b8',
+  Salary:     '#7B9266',
+  Freelance:  '#6B8499',
+  Investment: '#8B7355',
+  Gift:       '#9C7A8E',
+  Rental:     '#B58A7A',
+  Other:      '#9C9A8E',
 }
 
 const HOME_CURRENCY = 'SEK'
@@ -112,6 +112,22 @@ const POPULAR_CURRENCIES = ['SEK', 'EUR', 'USD', 'GBP', 'NOK', 'DKK', 'CHF', 'JP
 
 function fmt(n: number): string {
   return Math.round(n).toLocaleString('sv-SE') + '\u00a0kr'
+}
+
+const MONTH_NAMES = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December']
+
+function monthName(m: MonthState): string {
+  return MONTH_NAMES[m.month] ?? ''
+}
+
+function dayGroupLabel(dateStr: string): string {
+  const today = new Date(); today.setHours(0, 0, 0, 0)
+  const d = new Date(dateStr + 'T00:00:00')
+  const diff = Math.round((today.getTime() - d.getTime()) / 86400000)
+  if (diff === 0) return `Today, ${MONTH_NAMES[d.getMonth()].slice(0, 3)} ${d.getDate()}`
+  if (diff === 1) return `Yesterday, ${MONTH_NAMES[d.getMonth()].slice(0, 3)} ${d.getDate()}`
+  if (diff < 7) return `${d.toLocaleDateString('en-US', { weekday: 'short' })}, ${MONTH_NAMES[d.getMonth()].slice(0, 3)} ${d.getDate()}`.toUpperCase()
+  return `${MONTH_NAMES[d.getMonth()].slice(0, 3)} ${d.getDate()}`.toUpperCase()
 }
 
 async function fetchRates(): Promise<Record<string, number>> {
@@ -982,12 +998,336 @@ function getOccurrencesInMonth(rec: RecurringExpense, year: number, month: numbe
   return dates
 }
 
+function IncomeSummary({ monthIncomes }: { monthIncomes: Income[] }) {
+  const total = monthIncomes.reduce((s, i) => s + i.amount, 0)
+  const bySource = monthIncomes.reduce<Record<string, { total: number; lastDay: number | null }>>((acc, i) => {
+    const day = parseInt(i.date.slice(8, 10), 10) || null
+    const cur = acc[i.source] ?? { total: 0, lastDay: null }
+    cur.total += i.amount
+    if (day && (!cur.lastDay || day > cur.lastDay)) cur.lastDay = day
+    acc[i.source] = cur
+    return acc
+  }, {})
+  const sourceEntries = Object.entries(bySource).sort((a, b) => b[1].total - a[1].total)
+  return (
+    <div className="income-summary">
+      <div className="income-summary-hero card">
+        <span className="income-summary-label">{monthIncomes[0]?.date.slice(0, 7) ? new Date(monthIncomes[0].date + 'T00:00:00').toLocaleDateString('en-US', { month: 'long' }).toUpperCase() : ''} INCOME</span>
+        <span className="income-summary-amount">{fmt(total)}</span>
+        <span className="income-summary-sub">across {monthIncomes.length} {monthIncomes.length === 1 ? 'entry' : 'entries'}</span>
+      </div>
+      {sourceEntries.length > 1 && (
+        <div className="income-source-row">
+          {sourceEntries.slice(0, 4).map(([src, info]) => (
+            <div key={src} className="income-source-card card" style={{ borderColor: `${INCOME_SOURCE_COLORS[src] ?? '#9C9A8E'}55` }}>
+              <span className="income-source-card-label" style={{ color: INCOME_SOURCE_COLORS[src] ?? '#9C9A8E' }}>{src.toUpperCase()}</span>
+              <span className="income-source-card-amount">{fmt(info.total)}</span>
+              {info.lastDay && <span className="income-source-card-meta">{ordinalDay(info.lastDay)}</span>}
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  )
+}
+
+function ordinalDay(d: number): string {
+  if (d % 100 >= 11 && d % 100 <= 13) return `${d}th`
+  const last = d % 10
+  return `${d}${last === 1 ? 'st' : last === 2 ? 'nd' : last === 3 ? 'rd' : 'th'}`
+}
+
+type TxnType = 'expense' | 'income'
+
+interface AddTransactionSheetProps {
+  initialType: TxnType
+  defaultDate: string
+  onClose: () => void
+  onAddExpense: (e: Omit<Expense, 'id' | 'user_id' | 'created_at'>) => void
+  onAddIncome: (i: Omit<Income, 'id' | 'user_id' | 'created_at'>) => void
+  onAddRecurring?: (r: Omit<RecurringExpense, 'id' | 'user_id' | 'created_at'>) => Promise<void>
+  canAddRecurring: boolean
+}
+
+function AddTransactionSheet({ initialType, defaultDate, onClose, onAddExpense, onAddIncome, onAddRecurring, canAddRecurring }: AddTransactionSheetProps) {
+  const [type, setType] = useState<TxnType>(initialType)
+  const [amount, setAmount] = useState('')
+  const [description, setDescription] = useState('')
+  const [category, setCategory] = useState(CATEGORIES[0])
+  const [source, setSource] = useState(INCOME_SOURCES[0])
+  const [date, setDate] = useState(defaultDate)
+  const [tags, setTags] = useState('')
+  const [split, setSplit] = useState(false)
+  const [splitWays, setSplitWays] = useState(2)
+  const [recurring, setRecurring] = useState(false)
+  const [frequency, setFrequency] = useState<RecurringExpense['frequency']>('monthly')
+  const [currency, setCurrency] = useState(HOME_CURRENCY)
+  const [rates, setRates] = useState<Record<string, number>>({})
+
+  useEffect(() => { setDate(defaultDate) }, [defaultDate])
+  useEffect(() => {
+    if (currency !== HOME_CURRENCY && Object.keys(rates).length === 0) fetchRates().then(setRates)
+  }, [currency])
+
+  useEffect(() => {
+    function onKey(e: KeyboardEvent) { if (e.key === 'Escape') onClose() }
+    window.addEventListener('keydown', onKey)
+    return () => window.removeEventListener('keydown', onKey)
+  }, [onClose])
+
+  const rawAmount = parseFloat(amount)
+  const convertedAmount = type === 'expense' && currency !== HOME_CURRENCY && rates[currency] && !isNaN(rawAmount)
+    ? rawAmount / rates[currency]
+    : null
+
+  const isValid = !!description && !isNaN(rawAmount) && rawAmount > 0 && !!date
+
+  async function handleSave() {
+    if (!isValid) return
+    if (type === 'income') {
+      onAddIncome({ date, description, source, amount: rawAmount })
+      onClose()
+      return
+    }
+    const tagList = tags.split(',').map(t => t.trim().replace(/,/g, '')).filter(Boolean)
+    const sekAmount = currency !== HOME_CURRENCY && rates[currency]
+      ? rawAmount / rates[currency]
+      : rawAmount
+    if (recurring && canAddRecurring && onAddRecurring) {
+      await onAddRecurring({
+        description,
+        category,
+        amount: split ? sekAmount / splitWays : sekAmount,
+        frequency,
+        start_date: date,
+        active: true,
+      })
+      onClose()
+      return
+    }
+    onAddExpense({
+      date,
+      description,
+      category,
+      amount: split ? sekAmount / splitWays : sekAmount,
+      tags: tagList,
+      split_count: split ? splitWays : null,
+      ...(currency !== HOME_CURRENCY ? {
+        currency,
+        original_amount: split ? rawAmount / splitWays : rawAmount,
+      } : {}),
+    })
+    onClose()
+  }
+
+  const sourceColors: Record<string, string> = INCOME_SOURCE_COLORS
+
+  return (
+    <div className="txn-sheet-backdrop" onClick={onClose}>
+      <div className="txn-sheet" onClick={e => e.stopPropagation()} role="dialog" aria-label={`New ${type}`}>
+        <div className="txn-sheet-header">
+          <button className="txn-sheet-cancel" onClick={onClose}>Cancel</button>
+          <h2 className="txn-sheet-title">New {type}</h2>
+          <button className="txn-sheet-save" onClick={handleSave} disabled={!isValid}>Save</button>
+        </div>
+
+        <div className="txn-sheet-body">
+          <div className="txn-type-toggle">
+            <button className={`txn-type-btn${type === 'expense' ? ' txn-type-active' : ''}`} onClick={() => setType('expense')}>Expense</button>
+            <button className={`txn-type-btn${type === 'income' ? ' txn-type-active' : ''}`} onClick={() => setType('income')}>Income</button>
+          </div>
+
+          <div className="txn-amount-block">
+            <span className="txn-field-label">Amount</span>
+            <div className={`txn-amount-input-row txn-amount-${type}`}>
+              <span className="txn-amount-sign">{type === 'expense' ? '−' : '+'}</span>
+              <input
+                type="number"
+                min="0.01"
+                step="0.01"
+                inputMode="decimal"
+                placeholder="0"
+                value={amount}
+                onChange={e => setAmount(e.target.value)}
+                className="txn-amount-input"
+                autoFocus
+              />
+              {type === 'expense' ? (
+                <select value={currency} onChange={e => setCurrency(e.target.value)} className="txn-currency-select">
+                  {POPULAR_CURRENCIES.map(c => <option key={c}>{c}</option>)}
+                </select>
+              ) : (
+                <span className="txn-currency-static">kr</span>
+              )}
+            </div>
+            {convertedAmount !== null && (
+              <span className="txn-amount-hint">≈ {fmt(convertedAmount)}</span>
+            )}
+          </div>
+
+          <div className="txn-field">
+            <label className="txn-field-label" htmlFor="txn-description">Description</label>
+            <input
+              id="txn-description"
+              type="text"
+              value={description}
+              onChange={e => setDescription(e.target.value)}
+              placeholder={type === 'expense' ? 'e.g. Coop Stora' : 'e.g. Monthly salary'}
+              className="txn-text-input"
+            />
+          </div>
+
+          {type === 'expense' ? (
+            <div className="txn-field">
+              <span className="txn-field-label">Category</span>
+              <div className="txn-chip-grid">
+                {CATEGORIES.map(c => (
+                  <button
+                    key={c}
+                    className={`txn-cat-chip${category === c ? ' txn-cat-chip-active' : ''}`}
+                    onClick={() => setCategory(c)}
+                    style={category === c ? {
+                      borderColor: CATEGORY_COLORS[c],
+                      background: `${CATEGORY_COLORS[c]}22`,
+                      color: CATEGORY_COLORS[c],
+                    } : undefined}
+                  >
+                    <span className="txn-cat-chip-dot" style={{ background: CATEGORY_COLORS[c] }} />
+                    {c}
+                  </button>
+                ))}
+              </div>
+            </div>
+          ) : (
+            <div className="txn-field">
+              <span className="txn-field-label">Source</span>
+              <div className="txn-chip-grid">
+                {INCOME_SOURCES.map(s => (
+                  <button
+                    key={s}
+                    className={`txn-cat-chip${source === s ? ' txn-cat-chip-active' : ''}`}
+                    onClick={() => setSource(s)}
+                    style={source === s ? {
+                      borderColor: sourceColors[s],
+                      background: `${sourceColors[s]}22`,
+                      color: sourceColors[s],
+                    } : undefined}
+                  >
+                    <span className="txn-cat-chip-dot" style={{ background: sourceColors[s] }} />
+                    {s}
+                  </button>
+                ))}
+              </div>
+            </div>
+          )}
+
+          <div className="txn-field">
+            <label className="txn-field-label" htmlFor="txn-date">Date</label>
+            <input
+              id="txn-date"
+              type="date"
+              value={date}
+              onChange={e => setDate(e.target.value)}
+              className="txn-text-input txn-date-input"
+            />
+          </div>
+
+          {type === 'expense' && (
+            <>
+              <div className="txn-field">
+                <label className="txn-field-label" htmlFor="txn-tags">Tags <span className="txn-field-hint">comma-separated</span></label>
+                <input
+                  id="txn-tags"
+                  type="text"
+                  value={tags}
+                  onChange={e => setTags(e.target.value)}
+                  placeholder="e.g. weekly, sam"
+                  className="txn-text-input"
+                />
+              </div>
+
+              <div className="txn-toggle-row">
+                <div className="txn-toggle-text">
+                  <span className="txn-toggle-title">Split with someone</span>
+                  <span className="txn-toggle-sub">
+                    {split && rawAmount > 0 ? `${splitWays} ways · your share = ${fmt((convertedAmount ?? rawAmount) / splitWays)}` : 'Divide the total between people'}
+                  </span>
+                </div>
+                <button
+                  type="button"
+                  className={`txn-toggle${split ? ' txn-toggle-on' : ''}`}
+                  onClick={() => setSplit(s => !s)}
+                  aria-pressed={split}
+                ><span className="txn-toggle-thumb" /></button>
+              </div>
+
+              {split && (
+                <div className="txn-field">
+                  <label className="txn-field-label" htmlFor="txn-split-ways">Split ways</label>
+                  <input
+                    id="txn-split-ways"
+                    type="number"
+                    min="2"
+                    max="20"
+                    value={splitWays}
+                    onChange={e => setSplitWays(Math.max(2, parseInt(e.target.value) || 2))}
+                    className="txn-text-input"
+                    style={{ width: 100 }}
+                  />
+                </div>
+              )}
+
+              {canAddRecurring && (
+                <>
+                  <div className="txn-toggle-row">
+                    <div className="txn-toggle-text">
+                      <span className="txn-toggle-title">Make recurring</span>
+                      <span className="txn-toggle-sub">
+                        {recurring ? `Repeats ${frequency}, starting ${date}` : 'Schedule this expense to repeat'}
+                      </span>
+                    </div>
+                    <button
+                      type="button"
+                      className={`txn-toggle${recurring ? ' txn-toggle-on' : ''}`}
+                      onClick={() => setRecurring(r => !r)}
+                      aria-pressed={recurring}
+                    ><span className="txn-toggle-thumb" /></button>
+                  </div>
+
+                  {recurring && (
+                    <div className="txn-field">
+                      <label className="txn-field-label" htmlFor="txn-frequency">Frequency</label>
+                      <select
+                        id="txn-frequency"
+                        value={frequency}
+                        onChange={e => setFrequency(e.target.value as RecurringExpense['frequency'])}
+                        className="txn-text-input"
+                      >
+                        <option value="daily">Daily</option>
+                        <option value="weekly">Weekly</option>
+                        <option value="monthly">Monthly</option>
+                        <option value="yearly">Yearly</option>
+                      </select>
+                    </div>
+                  )}
+                </>
+              )}
+            </>
+          )}
+        </div>
+      </div>
+    </div>
+  )
+}
+
 interface AddExpenseFormProps {
   onAdd: (expense: Omit<Expense, 'id' | 'user_id' | 'created_at'>) => void
   defaultDate: string
 }
 
-function AddExpenseForm({ onAdd, defaultDate }: AddExpenseFormProps) {
+// @ts-ignore: kept for reference, replaced by AddTransactionSheet
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
+function _AddExpenseForm({ onAdd, defaultDate }: AddExpenseFormProps) {
   const [form, setForm] = useState({
     date: defaultDate,
     description: '',
@@ -1136,7 +1476,9 @@ interface AddIncomeFormProps {
   defaultDate: string
 }
 
-function AddIncomeForm({ onAdd, defaultDate }: AddIncomeFormProps) {
+// @ts-ignore: kept for reference, replaced by AddTransactionSheet
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
+function _AddIncomeForm({ onAdd, defaultDate }: AddIncomeFormProps) {
   const [form, setForm] = useState({
     date: defaultDate,
     description: '',
@@ -1348,14 +1690,7 @@ function ExpenseList({ expenses, onDelete, onEdit }: ExpenseListProps) {
           </thead>
           <tbody>
             {(() => {
-              const today = new Date(); today.setHours(0,0,0,0)
-              const yesterday = new Date(today); yesterday.setDate(today.getDate() - 1)
-              function dayLabel(dateStr: string) {
-                const d = new Date(dateStr + 'T00:00:00')
-                if (d.getTime() === today.getTime()) return 'Today'
-                if (d.getTime() === yesterday.getTime()) return 'Yesterday'
-                return d.toLocaleDateString('default', { weekday: 'short', month: 'short', day: 'numeric' })
-              }
+              const dayLabel = dayGroupLabel
               let lastDate = ''
               let rowIdx = 0
               return filtered.map(e => {
@@ -1589,14 +1924,7 @@ function IncomeList({ incomes, onDelete, onEdit }: IncomeListProps) {
           </thead>
           <tbody>
             {(() => {
-              const today = new Date(); today.setHours(0,0,0,0)
-              const yesterday = new Date(today); yesterday.setDate(today.getDate() - 1)
-              function dayLabel(dateStr: string) {
-                const d = new Date(dateStr + 'T00:00:00')
-                if (d.getTime() === today.getTime()) return 'Today'
-                if (d.getTime() === yesterday.getTime()) return 'Yesterday'
-                return d.toLocaleDateString('default', { weekday: 'short', month: 'short', day: 'numeric' })
-              }
+              const dayLabel = dayGroupLabel
               let lastDate = ''
               let rowIdx = 0
               return filtered.map(inc => {
@@ -2890,7 +3218,7 @@ function Sidebar({ active, onChange, session, guestMode, onSignOut, onSignIn }: 
   )
 }
 
-function MobileTabBar({ active, onChange }: { active: MobileTab; onChange: (t: MobileTab) => void }) {
+function MobileTabBar({ active, onChange, onAdd }: { active: MobileTab; onChange: (t: MobileTab) => void; onAdd: () => void }) {
   return (
     <nav className="tab-bar">
       <button className={`tab-btn${active === 'overview' ? ' tab-active' : ''}`} onClick={() => onChange('overview')}>
@@ -2906,12 +3234,10 @@ function MobileTabBar({ active, onChange }: { active: MobileTab; onChange: (t: M
         </svg>
         <span>Expenses</span>
       </button>
-      <button className={`tab-btn${active === 'income' ? ' tab-active' : ''}`} onClick={() => onChange('income')}>
-        <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" width="22" height="22" aria-hidden="true">
-          <circle cx="10" cy="10" r="8" />
-          <path d="M10 13.5v-7M7.5 9l2.5-2.5L12.5 9" />
+      <button className="tab-btn-add" onClick={onAdd} aria-label="New entry">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" width="22" height="22" aria-hidden="true">
+          <path d="M12 5v14M5 12h14" />
         </svg>
-        <span>Income</span>
       </button>
       <button className={`tab-btn${active === 'plan' ? ' tab-active' : ''}`} onClick={() => onChange('plan')}>
         <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" width="22" height="22" aria-hidden="true">
@@ -2949,6 +3275,7 @@ export default function App() {
   const [recurringExpenses, setRecurringExpenses] = useState<RecurringExpense[]>([])
   const sessionApplied = useRef(new Set<string>())
   const [activeTab, setActiveTab] = useState<MobileTab>('overview')
+  const [txnSheet, setTxnSheet] = useState<TxnType | null>(null)
   const [currentMonth, setCurrentMonth] = useState<MonthState>(() => {
     const stored = localStorage.getItem('periodStartDay')
     return getCurrentPeriod(stored ? Number(stored) : 1)
@@ -3342,11 +3669,26 @@ export default function App() {
             </aside>
             <main>
               <div className={`tab-section${activeTab !== 'expenses' ? ' mobile-hidden' : ''}`}>
-                <AddExpenseForm onAdd={handleAddExpense} defaultDate={defaultDate} />
+                <div className="tab-section-header">
+                  <div className="tab-section-title">
+                    <h1>Expenses</h1>
+                    <span className="tab-section-sub">{monthExpenses.length} {monthExpenses.length === 1 ? 'entry' : 'entries'} · {monthName(currentMonth)}</span>
+                  </div>
+                  <button className="new-entry-btn" onClick={() => setTxnSheet('expense')}>+ New entry</button>
+                </div>
                 <ExpenseList expenses={monthExpenses} onDelete={handleDeleteExpense} onEdit={handleEditExpense} />
               </div>
               <div className={`tab-section${activeTab !== 'income' ? ' mobile-hidden' : ''}`}>
-                <AddIncomeForm onAdd={handleAddIncome} defaultDate={defaultDate} />
+                <div className="tab-section-header">
+                  <div className="tab-section-title">
+                    <h1>Income</h1>
+                    <span className="tab-section-sub">{monthIncomes.length} {monthIncomes.length === 1 ? 'source' : 'sources'} · {monthName(currentMonth)}</span>
+                  </div>
+                  <button className="new-entry-btn" onClick={() => setTxnSheet('income')}>+ New entry</button>
+                </div>
+                {monthIncomes.length > 0 && (
+                  <IncomeSummary monthIncomes={monthIncomes} />
+                )}
                 <IncomeList incomes={monthIncomes} onDelete={handleDeleteIncome} onEdit={handleEditIncome} />
               </div>
             </main>
@@ -3386,12 +3728,23 @@ export default function App() {
           </div>
         </div>
       </div>
-      <MobileTabBar active={activeTab} onChange={setActiveTab} />
+      <MobileTabBar active={activeTab} onChange={setActiveTab} onAdd={() => setTxnSheet(activeTab === 'income' ? 'income' : 'expense')} />
       {deleteToast && (
         <div className="delete-toast">
           <span className="delete-toast-msg">Deleted <strong>{deleteToast.label}</strong></span>
           <button className="delete-toast-undo" onClick={handleUndoDelete}>Undo</button>
         </div>
+      )}
+      {txnSheet && (
+        <AddTransactionSheet
+          initialType={txnSheet}
+          defaultDate={defaultDate}
+          onClose={() => setTxnSheet(null)}
+          onAddExpense={handleAddExpense}
+          onAddIncome={handleAddIncome}
+          onAddRecurring={handleAddRecurring}
+          canAddRecurring={!guestMode && !!session}
+        />
       )}
     </div>
   )

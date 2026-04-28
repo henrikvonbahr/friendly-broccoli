@@ -1,40 +1,10 @@
 import { useState } from 'react'
 import { supabase } from './supabaseClient'
+import Logo from './Logo'
 import './Auth.css'
 
 interface AuthProps {
   onContinueAsGuest: () => void
-}
-
-function SageLeaf() {
-  return (
-    <svg width="32" height="32" viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg">
-      <path
-        d="M16 4C16 4 6 8 6 18C6 23.5228 10.4772 28 16 28C21.5228 28 26 23.5228 26 18C26 8 16 4 16 4Z"
-        fill="var(--sage)"
-        opacity="0.25"
-      />
-      <path
-        d="M16 4C16 4 6 8 6 18C6 23.5228 10.4772 28 16 28"
-        stroke="var(--sage)"
-        strokeWidth="1.5"
-        strokeLinecap="round"
-      />
-      <path
-        d="M16 4C16 4 26 8 26 18C26 23.5228 21.5228 28 16 28"
-        stroke="var(--sage-deep)"
-        strokeWidth="1.5"
-        strokeLinecap="round"
-      />
-      <path
-        d="M16 28L16 14"
-        stroke="var(--sage)"
-        strokeWidth="1"
-        strokeLinecap="round"
-        opacity="0.6"
-      />
-    </svg>
-  )
 }
 
 export default function Auth({ onContinueAsGuest }: AuthProps) {
@@ -73,7 +43,7 @@ export default function Auth({ onContinueAsGuest }: AuthProps) {
     <div className="auth-screen">
       <div className="auth-inner">
         <div className="auth-brand">
-          <SageLeaf />
+          <Logo size={32} />
           <span className="auth-wordmark">Sage</span>
         </div>
 
