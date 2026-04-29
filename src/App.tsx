@@ -2324,12 +2324,17 @@ function RecurringSection({ recurring, onAdd, onDelete, onToggle }: RecurringSec
     <div className="recurring-section">
       <div className="recurring-overview card">
         <div className="recurring-overview-row">
-          <div>
+          <div className="recurring-overview-text">
             <h2>Recurring</h2>
-            <p className="recurring-subtitle">{recurring.filter(r => r.active).length} active · ~{fmt(Math.round(totalMonthly))}/mo</p>
+            <p className="recurring-subtitle">
+              {recurring.filter(r => r.active).length} active · ~{fmt(Math.round(totalMonthly))}/mo
+            </p>
           </div>
-          <button className="add-recurring-btn" onClick={() => setShowForm(s => !s)}>
-            {showForm ? '✕ Cancel' : '+ Add'}
+          <button
+            className={showForm ? 'recurring-add-btn recurring-add-btn-cancel' : 'recurring-add-btn'}
+            onClick={() => setShowForm(s => !s)}
+          >
+            {showForm ? 'Cancel' : '+ Add'}
           </button>
         </div>
       </div>
@@ -2371,31 +2376,63 @@ function RecurringSection({ recurring, onAdd, onDelete, onToggle }: RecurringSec
       )}
 
       {recurring.length === 0 ? (
-        <div className="card"><p className="empty">No recurring expenses set up yet.</p></div>
+        <div className="card recurring-empty">
+          <p className="empty">No recurring expenses set up yet.</p>
+        </div>
       ) : (
         <div className="recurring-list card">
-          {recurring.map(rec => (
-            <div key={rec.id} className={`recurring-row${!rec.active ? ' recurring-paused' : ''}`}>
-              <div className="recurring-dot" style={{ background: CATEGORY_COLORS[rec.category] ?? '#94a3b8' }} />
-              <div className="recurring-info">
-                <span className="recurring-name">{rec.description}</span>
-                <span className="recurring-meta">
-                  <span className="badge" style={{ color: CATEGORY_COLORS[rec.category] ?? '#94a3b8', background: `${CATEGORY_COLORS[rec.category] ?? '#94a3b8'}18`, borderColor: `${CATEGORY_COLORS[rec.category] ?? '#94a3b8'}44` }}>{CATEGORY_ICONS[rec.category]}{rec.category}</span>
-                  <span className="recurring-freq">{FREQUENCY_LABELS[rec.frequency]}</span>
-                </span>
+          {recurring.map(rec => {
+            const color = CATEGORY_COLORS[rec.category] ?? '#9C9A8E'
+            return (
+              <div key={rec.id} className={`recurring-row${!rec.active ? ' recurring-paused' : ''}`}>
+                <div className="recurring-dot" style={{ background: color }} />
+                <div className="recurring-info">
+                  <span className="recurring-name">{rec.description}</span>
+                  <span className="recurring-meta">
+                    <span
+                      className="badge"
+                      style={{
+                        color,
+                        background: `${color}18`,
+                        borderColor: `${color}44`,
+                      }}
+                    >
+                      {CATEGORY_ICONS[rec.category]}
+                      {rec.category}
+                    </span>
+                    <span className="recurring-freq">{FREQUENCY_LABELS[rec.frequency]}</span>
+                  </span>
+                </div>
+                <div className="recurring-amount-col">
+                  <span className="recurring-amount">{fmt(rec.amount)}</span>
+                  <span className="recurring-monthly">~{fmt(Math.round(monthlyEquivalent(rec)))}/mo</span>
+                </div>
+                <div className="recurring-actions">
+                  <button
+                    type="button"
+                    className={`txn-toggle${rec.active ? ' txn-toggle-on' : ''}`}
+                    onClick={() => onToggle(rec.id, !rec.active)}
+                    aria-pressed={rec.active}
+                    aria-label={rec.active ? 'Pause' : 'Resume'}
+                    title={rec.active ? 'Pause' : 'Resume'}
+                  >
+                    <span className="txn-toggle-thumb" />
+                  </button>
+                  <button
+                    type="button"
+                    className="recurring-delete-btn"
+                    onClick={() => onDelete(rec.id)}
+                    aria-label="Delete recurring"
+                    title="Delete"
+                  >
+                    <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" width="16" height="16" aria-hidden="true">
+                      <path d="M5 5l10 10M15 5L5 15" />
+                    </svg>
+                  </button>
+                </div>
               </div>
-              <div className="recurring-amount-col">
-                <span className="recurring-amount">{fmt(rec.amount)}</span>
-                <span className="recurring-monthly">~{fmt(Math.round(monthlyEquivalent(rec)))}/mo</span>
-              </div>
-              <div className="recurring-actions">
-                <button className="sort-btn" onClick={() => onToggle(rec.id, !rec.active)} title={rec.active ? 'Pause' : 'Resume'}>
-                  {rec.active ? '⏸' : '▶'}
-                </button>
-                <button className="delete-btn" onClick={() => onDelete(rec.id)} title="Delete">&#215;</button>
-              </div>
-            </div>
-          ))}
+            )
+          })}
         </div>
       )}
     </div>

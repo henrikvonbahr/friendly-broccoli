@@ -1687,100 +1687,236 @@ tbody td {
 
 .budget-item:last-child { border-bottom: none; }
 
-/* Recurring */
-.recurring-summary {
-  padding: 14px 16px;
-  margin-bottom: 12px;
+/* ── Recurring ────────────────────────────────────────────── */
+
+.recurring-section {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-md);
 }
 
-.recurring-summary-amount {
+/* Overview / header card */
+.recurring-overview {
+  padding: var(--sp-lg);
+}
+
+.recurring-overview-row {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: var(--sp-md);
+}
+
+.recurring-overview-text {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-xs);
+  min-width: 0;
+}
+
+.recurring-section .recurring-overview h2 {
   font-family: var(--font-display);
-  font-size: 28px;
+  font-size: 22px;
   font-weight: 500;
-  letter-spacing: -0.7px;
+  letter-spacing: -0.02em;
+  line-height: 1.2;
   color: var(--text);
-  font-variant-numeric: tabular-nums;
+  margin: 0;
 }
 
-.recurring-summary-sub {
-  font-size: 12px;
+.recurring-subtitle {
+  font-size: 13px;
+  font-weight: 400;
+  line-height: 1.5;
   color: var(--text-muted);
-  margin-top: 2px;
+  margin: 0;
 }
 
-.recurring-list { overflow: hidden; }
+/* Add button — primary spec, switches to secondary in cancel state */
+.recurring-add-btn {
+  background: var(--sage);
+  color: var(--bg);
+  border: none;
+  border-radius: 8px;
+  padding: var(--sp-sm) 14px;
+  font-size: 12.5px;
+  font-weight: 600;
+  font-family: var(--font-ui);
+  cursor: pointer;
+  min-height: 32px;
+  white-space: nowrap;
+  flex-shrink: 0;
+  transition: opacity var(--t-quick) var(--ease-quick), transform var(--t-quick) var(--ease-quick);
+}
+
+.recurring-add-btn:hover { opacity: 0.9; }
+.recurring-add-btn:active { transform: scale(0.97); }
+
+.recurring-add-btn-cancel {
+  background: var(--surface);
+  color: var(--text);
+  border: 0.5px solid var(--border);
+}
+
+.recurring-add-btn-cancel:hover {
+  opacity: 1;
+  background: var(--surface-alt);
+  border-color: var(--border-strong);
+}
+
+/* List */
+.recurring-list {
+  overflow: hidden;
+}
+
+.recurring-empty {
+  padding: var(--sp-xl) var(--sp-lg);
+}
 
 .recurring-row {
   display: flex;
   align-items: center;
-  gap: 12px;
-  padding: 12px 18px;
+  gap: var(--sp-md);
+  padding: var(--sp-md) var(--sp-lg);
   border-bottom: 0.5px solid var(--border);
+  transition: background var(--t-quick) var(--ease-quick), opacity var(--t-quick) var(--ease-quick);
 }
 
 .recurring-row:last-child { border-bottom: none; }
-.recurring-row.paused     { opacity: 0.55; }
+.recurring-row:hover     { background: var(--surface-alt); }
+.recurring-paused        { opacity: 0.6; }
+.recurring-paused .recurring-amount,
+.recurring-paused .recurring-monthly { color: var(--text-faint); }
 
-.recurring-icon {
-  width: 32px;
-  height: 32px;
+/* Category dot — design-system marker */
+.recurring-dot {
+  width: 8px;
+  height: 8px;
   border-radius: 50%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 13px;
   flex-shrink: 0;
+  align-self: center;
 }
 
-.recurring-info { flex: 1; min-width: 0; }
+.recurring-info {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-xs);
+}
 
+/* Body / UI — Inter 400, 14px, 1.5 */
 .recurring-name {
-  font-size: 13px;
+  font-size: 14px;
   font-weight: 500;
   color: var(--text);
-  display: flex;
-  align-items: center;
-  gap: 6px;
+  line-height: 1.4;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
 }
 
-.paused-badge {
-  font-size: 10px;
-  padding: 1px 5px;
-  background: var(--surface-alt);
-  border: 0.5px solid var(--border);
-  border-radius: 4px;
-  color: var(--text-muted);
-  font-family: var(--font-mono);
-  flex-shrink: 0;
+.recurring-meta {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: var(--sp-sm);
+}
+
+.recurring-meta .badge {
+  font-size: 11px;
+  font-weight: 500;
+  padding: 2px var(--sp-sm);
+  border-radius: var(--r-chip);
+  border: 0.5px solid;
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  letter-spacing: 0.02em;
+  line-height: 1.4;
 }
 
 .recurring-freq {
   font-size: 11px;
+  font-weight: 500;
   color: var(--text-muted);
-  margin-top: 2px;
+  letter-spacing: 0.05em;
+  line-height: 1.3;
 }
 
-.recurring-amount {
-  text-align: right;
+.recurring-amount-col {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 2px;
   flex-shrink: 0;
 }
 
-.recurring-amount-val {
+/* Number — IBM Plex Mono 500, 14px, tabular */
+.recurring-amount {
   font-family: var(--font-mono);
-  font-size: 13px;
-  font-weight: 600;
+  font-size: 14px;
+  font-weight: 500;
   color: var(--text);
   font-variant-numeric: tabular-nums;
+  line-height: 1.3;
 }
 
-.recurring-amount-yr {
-  display: block;
+.recurring-monthly {
   font-family: var(--font-mono);
-  font-size: 10px;
+  font-size: 11px;
+  font-weight: 500;
   color: var(--text-faint);
+  font-variant-numeric: tabular-nums;
+  line-height: 1.3;
+}
+
+/* Action cluster: toggle + delete */
+.recurring-actions {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-sm);
+  flex-shrink: 0;
+  margin-left: var(--sp-sm);
+}
+
+/* Ghost icon button — design-system "Ghost" variant */
+.recurring-delete-btn {
+  width: 32px;
+  height: 32px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: transparent;
+  border: none;
+  border-radius: 8px;
+  color: var(--text-faint);
+  cursor: pointer;
+  transition: background var(--t-quick) var(--ease-quick), color var(--t-quick) var(--ease-quick);
+  padding: 0;
+}
+
+.recurring-delete-btn:hover {
+  background: var(--expense-soft);
+  color: var(--expense);
+}
+
+@media (max-width: 480px) {
+  .recurring-row {
+    flex-wrap: wrap;
+    padding: var(--sp-md);
+  }
+  .recurring-amount-col {
+    margin-left: auto;
+  }
+  .recurring-actions {
+    width: 100%;
+    justify-content: flex-end;
+    margin-left: 0;
+    margin-top: var(--sp-xs);
+    padding-top: var(--sp-sm);
+    border-top: 0.5px solid var(--border);
+  }
 }
 
 .toggle-btn {
