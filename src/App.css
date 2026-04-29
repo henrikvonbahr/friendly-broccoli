@@ -190,14 +190,16 @@
 }
 
 .signout-btn {
-  padding: 5px 12px;
+  padding: var(--sp-sm) var(--sp-md);
   background: transparent;
   border: 0.5px solid var(--border);
-  border-radius: 7px;
+  border-radius: 8px;
   color: var(--text-muted);
-  font-size: 12px;
+  font-size: 12.5px;
+  font-weight: 500;
   cursor: pointer;
-  transition: background 0.1s;
+  min-height: 32px;
+  transition: background var(--t-quick) var(--ease-quick), color var(--t-quick) var(--ease-quick);
 }
 
 .signout-btn:hover {
@@ -256,16 +258,18 @@
 }
 
 .month-nav button {
-  padding: 5px 10px;
+  padding: var(--sp-xs) var(--sp-md);
   background: transparent;
   border: 0.5px solid var(--border);
-  border-radius: 6px;
+  border-radius: 8px;
   color: var(--text-muted);
   font-size: 14px;
   cursor: pointer;
   flex-shrink: 0;
+  min-width: 32px;
+  min-height: 32px;
   font-family: var(--font-ui);
-  transition: background 0.1s;
+  transition: background var(--t-quick) var(--ease-quick);
 }
 
 .month-nav button:hover {
@@ -301,14 +305,16 @@
   display: flex;
   flex-direction: column;
   align-items: center;
+  justify-content: center;
   gap: 3px;
   background: transparent;
   border: 0;
-  padding: 6px 0 4px;
+  padding: var(--sp-sm) 0 var(--sp-xs);
   color: var(--text-muted);
   cursor: pointer;
   font-family: var(--font-ui);
-  transition: color 0.1s;
+  min-height: 44px;
+  transition: color var(--t-quick) var(--ease-quick);
 }
 
 .tab-btn span {
@@ -2920,36 +2926,43 @@ tbody td {
   padding: 4px 4px 4px;
 }
 
+/* Heading — design system spec: Fraunces 500, 22px, 1.2 leading, -0.02em */
 .tab-section-title h1 {
   font-family: var(--font-display);
   font-size: 22px;
   font-weight: 500;
-  letter-spacing: -0.4px;
+  letter-spacing: -0.02em;
+  line-height: 1.2;
   color: var(--text);
   margin: 0;
-  line-height: 1.1;
 }
 
+/* Caption — Inter 500, 11px, 0.05em */
 .tab-section-sub {
-  font-size: 12.5px;
+  font-size: 11px;
+  font-weight: 500;
   color: var(--text-muted);
-  margin-top: 4px;
+  margin-top: var(--sp-xs);
   display: block;
+  letter-spacing: 0.05em;
+  line-height: 1.3;
 }
 
+/* Primary button — design system spec: padding 8/14, radius 8, 12.5/600 */
 .new-entry-btn {
   background: var(--sage);
   color: var(--bg);
   border: none;
   border-radius: 8px;
-  padding: 8px 14px;
-  font-size: 13px;
-  font-weight: 500;
+  padding: var(--sp-sm) 14px;
+  font-size: 12.5px;
+  font-weight: 600;
   font-family: var(--font-ui);
   cursor: pointer;
-  transition: opacity 0.15s, transform 0.1s;
+  transition: opacity var(--t-quick) var(--ease-quick), transform var(--t-quick) var(--ease-quick);
   white-space: nowrap;
   flex-shrink: 0;
+  min-height: 32px;
 }
 
 .new-entry-btn:hover { opacity: 0.9; }
@@ -2961,7 +2974,7 @@ tbody td {
   flex: 0 0 auto;
   width: 44px;
   height: 44px;
-  margin: 0 6px;
+  margin: 0 var(--sp-xs);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -2971,8 +2984,8 @@ tbody td {
   border-radius: 50%;
   cursor: pointer;
   align-self: center;
-  transition: opacity 0.15s, transform 0.1s;
-  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.08);
+  transition: opacity var(--t-quick) var(--ease-quick), transform var(--t-quick) var(--ease-quick);
+  box-shadow: var(--shadow-resting);
 }
 
 .tab-btn-add:hover { opacity: 0.9; }
@@ -2999,20 +3012,23 @@ tbody td {
   border-color: color-mix(in srgb, var(--sage) 25%, transparent);
 }
 
+/* Caption — Inter 500, 11px, 0.05em */
 .income-summary-label {
-  font-size: 10.5px;
-  font-weight: 600;
+  font-size: 11px;
+  font-weight: 500;
   color: var(--text-muted);
   text-transform: uppercase;
-  letter-spacing: 0.7px;
+  letter-spacing: 0.05em;
+  line-height: 1.3;
 }
 
+/* Display M — Fraunces 500, 36px, 1.1 leading, -0.025em */
 .income-summary-amount {
   font-family: var(--font-display);
-  font-size: 32px;
+  font-size: 36px;
   font-weight: 500;
   color: var(--income);
-  letter-spacing: -0.6px;
+  letter-spacing: -0.025em;
   font-variant-numeric: tabular-nums;
   line-height: 1.1;
   margin-top: 2px;
@@ -3090,10 +3106,11 @@ tbody td {
   max-height: 95vh;
   display: flex;
   flex-direction: column;
-  border-radius: 18px 18px 0 0;
+  border-radius: var(--r-sheet) var(--r-sheet) 0 0;
   border: 0.5px solid var(--border);
   border-bottom: none;
-  animation: txnSlide 0.22s cubic-bezier(0.2, 0.8, 0.3, 1);
+  box-shadow: var(--shadow-floating);
+  animation: txnSlide var(--t-standard) var(--ease-standard);
   overflow: hidden;
 }
 
@@ -3102,10 +3119,10 @@ tbody td {
     align-items: center;
   }
   .txn-sheet {
-    border-radius: 14px;
+    border-radius: var(--r-modal);
     border-bottom: 0.5px solid var(--border);
     max-height: 88vh;
-    animation: txnFade 0.18s ease;
+    animation: txnFade var(--t-quick) var(--ease-quick);
   }
 }
 
@@ -3191,25 +3208,27 @@ tbody td {
 .txn-amount-block {
   display: flex;
   flex-direction: column;
-  gap: 6px;
+  gap: var(--sp-sm);
   align-items: center;
-  padding: 12px 0 6px;
+  padding: var(--sp-md) 0 var(--sp-sm);
 }
 
+/* Caption — Inter 500, 11px, 0.05em */
 .txn-field-label {
-  font-size: 10.5px;
-  font-weight: 600;
+  font-size: 11px;
+  font-weight: 500;
   color: var(--text-muted);
   text-transform: uppercase;
-  letter-spacing: 0.7px;
+  letter-spacing: 0.05em;
+  line-height: 1.3;
 }
 
 .txn-amount-input-row {
   display: flex;
   align-items: baseline;
-  gap: 6px;
+  gap: var(--sp-sm);
   border-bottom: 0.5px solid var(--border);
-  padding: 4px 12px 8px;
+  padding: var(--sp-xs) var(--sp-md) var(--sp-sm);
   min-width: 200px;
   justify-content: center;
 }
@@ -3224,10 +3243,13 @@ tbody td {
   color: var(--income);
 }
 
+/* Display L — Fraunces 500, 56px, 1.05 leading, -0.03em */
 .txn-amount-sign {
   font-family: var(--font-display);
-  font-size: 38px;
+  font-size: 44px;
   font-weight: 500;
+  letter-spacing: -0.03em;
+  line-height: 1.05;
 }
 
 .txn-amount-input {
@@ -3235,10 +3257,11 @@ tbody td {
   border: none;
   outline: none;
   font-family: var(--font-display);
-  font-size: 38px;
+  font-size: 44px;
   font-weight: 500;
-  letter-spacing: -1px;
-  width: 160px;
+  letter-spacing: -0.03em;
+  line-height: 1.05;
+  width: 180px;
   text-align: right;
   font-variant-numeric: tabular-nums;
 }
@@ -3295,18 +3318,21 @@ tbody td {
 .txn-text-input {
   background: var(--surface-alt);
   border: 0.5px solid var(--border);
-  border-radius: 8px;
-  padding: 11px 13px;
-  font-size: 14.5px;
+  border-radius: var(--r-input);
+  padding: var(--sp-md) 13px;
+  font-size: 14px;
+  line-height: 1.5;
   font-family: var(--font-ui);
   color: var(--text);
   outline: none;
-  transition: border-color 0.15s, background 0.15s;
+  min-height: 44px;
+  transition: border-color var(--t-quick) var(--ease-quick), background var(--t-quick) var(--ease-quick), box-shadow var(--t-quick) var(--ease-quick);
 }
 
 .txn-text-input:focus {
   border-color: var(--sage);
   background: var(--surface);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--sage) 18%, transparent);
 }
 
 .txn-date-input {
@@ -3318,23 +3344,24 @@ tbody td {
 .txn-chip-grid {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(110px, 1fr));
-  gap: 8px;
+  gap: var(--sp-sm);
 }
 
 .txn-cat-chip {
   display: flex;
   align-items: center;
-  gap: 8px;
-  padding: 9px 12px;
+  gap: var(--sp-sm);
+  padding: var(--sp-sm) var(--sp-md);
   background: var(--surface-alt);
   border: 0.5px solid var(--border);
-  border-radius: 8px;
+  border-radius: var(--r-chip);
   font-size: 13px;
   font-weight: 500;
   color: var(--text-muted);
   font-family: var(--font-ui);
   cursor: pointer;
-  transition: background 0.12s, border-color 0.12s, color 0.12s;
+  min-height: 36px;
+  transition: background var(--t-quick) var(--ease-quick), border-color var(--t-quick) var(--ease-quick), color var(--t-quick) var(--ease-quick);
   text-align: left;
 }
 
@@ -3359,11 +3386,11 @@ tbody td {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 12px;
-  padding: 12px 14px;
+  gap: var(--sp-md);
+  padding: var(--sp-md) 14px;
   background: var(--surface-alt);
   border: 0.5px solid var(--border);
-  border-radius: 10px;
+  border-radius: var(--r-input);
 }
 
 .txn-toggle-text {
@@ -3373,44 +3400,51 @@ tbody td {
 }
 
 .txn-toggle-title {
-  font-size: 13.5px;
+  font-size: 13px;
   font-weight: 500;
   color: var(--text);
+  line-height: 1.4;
 }
 
 .txn-toggle-sub {
-  font-size: 11.5px;
+  font-size: 11px;
   color: var(--text-muted);
+  line-height: 1.3;
+  letter-spacing: 0.05em;
 }
 
+/* Toggle — design system spec: 36×22, sage/surfaceAlt, thumb shadow */
 .txn-toggle {
-  width: 38px;
+  width: 36px;
   height: 22px;
   border-radius: 11px;
-  background: var(--border);
-  border: none;
+  background: var(--surface-alt);
+  border: 0.5px solid var(--border);
   position: relative;
   cursor: pointer;
-  transition: background 0.18s;
+  transition: background var(--t-quick) var(--ease-quick), border-color var(--t-quick) var(--ease-quick);
   flex-shrink: 0;
+  padding: 0;
 }
 
 .txn-toggle-thumb {
   position: absolute;
-  top: 3px;
-  left: 3px;
+  top: 2px;
+  left: 2px;
   width: 16px;
   height: 16px;
   border-radius: 50%;
   background: var(--surface);
-  transition: transform 0.18s;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.15);
+  transition: transform var(--t-quick) var(--ease-quick);
 }
 
 .txn-toggle-on {
   background: var(--sage);
+  border-color: var(--sage);
 }
 
 .txn-toggle-on .txn-toggle-thumb {
-  transform: translateX(16px);
+  transform: translateX(14px);
 }
 

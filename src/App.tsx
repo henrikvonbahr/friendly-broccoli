@@ -1325,9 +1325,8 @@ interface AddExpenseFormProps {
   defaultDate: string
 }
 
-// @ts-ignore: kept for reference, replaced by AddTransactionSheet
-// eslint-disable-next-line @typescript-eslint/no-unused-vars
-function _AddExpenseForm({ onAdd, defaultDate }: AddExpenseFormProps) {
+// Kept for reference — replaced by AddTransactionSheet
+export function AddExpenseForm({ onAdd, defaultDate }: AddExpenseFormProps) {
   const [form, setForm] = useState({
     date: defaultDate,
     description: '',
@@ -1476,9 +1475,8 @@ interface AddIncomeFormProps {
   defaultDate: string
 }
 
-// @ts-ignore: kept for reference, replaced by AddTransactionSheet
-// eslint-disable-next-line @typescript-eslint/no-unused-vars
-function _AddIncomeForm({ onAdd, defaultDate }: AddIncomeFormProps) {
+// Kept for reference — replaced by AddTransactionSheet
+export function AddIncomeForm({ onAdd, defaultDate }: AddIncomeFormProps) {
   const [form, setForm] = useState({
     date: defaultDate,
     description: '',

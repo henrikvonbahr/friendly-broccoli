@@ -35,6 +35,36 @@
   --font-display: 'Fraunces', 'Iowan Old Style', Georgia, serif;
   --font-mono:    'IBM Plex Mono', 'SF Mono', ui-monospace, monospace;
 
+  /* Spacing — 4-pt scale */
+  --sp-xs:  4px;
+  --sp-sm:  8px;
+  --sp-md:  12px;
+  --sp-lg:  16px;
+  --sp-xl:  24px;
+  --sp-2xl: 32px;
+
+  /* Radii */
+  --r-chip:  6px;
+  --r-input: 9px;
+  --r-card:  12px;
+  --r-modal: 16px;
+  --r-sheet: 20px;
+  --r-pill:  999px;
+
+  /* Elevation */
+  --shadow-hairline: 0 0 0 0.5px rgba(0,0,0,0.08);
+  --shadow-resting:  0 1px 2px rgba(0,0,0,0.04);
+  --shadow-raised:   0 4px 12px rgba(0,0,0,0.06);
+  --shadow-floating: 0 10px 32px rgba(0,0,0,0.12);
+
+  /* Motion */
+  --t-quick:    120ms;
+  --t-standard: 200ms;
+  --t-calm:     320ms;
+  --ease-quick:    cubic-bezier(0, 0, 0.2, 1);
+  --ease-standard: cubic-bezier(0.2, 0.7, 0.2, 1);
+  --ease-calm:     cubic-bezier(0.4, 0, 0.2, 1);
+
   color-scheme: light dark;
   font-family: var(--font-ui);
   font-size: 16px;
@@ -118,4 +148,24 @@ body {
 
 input, select, button, textarea {
   font-family: inherit;
+}
+
+/* Tabular numerals for any monospace context — design system requires
+   tabular figures on every chart axis and number. */
+.tabular,
+[class*='-amount'],
+[class*='-value'],
+[class*='-number'] {
+  font-variant-numeric: tabular-nums;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
 }
