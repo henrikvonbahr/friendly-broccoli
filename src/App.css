@@ -1297,17 +1297,47 @@ tbody td {
 .insight-row {
   display: flex;
   align-items: flex-start;
-  gap: 12px;
-  padding: 11px 18px;
+  gap: var(--sp-md);
+  padding: var(--sp-md) var(--sp-lg);
   border-bottom: 0.5px solid var(--border);
 }
 
 .insight-row:last-child { border-bottom: none; }
 
-.insight-icon {
-  font-size: 16px;
+/* Insight chip — system spec: chip radius 6, caption 11/0.05em.
+   Tone determined by insight type. */
+.insight-tag {
+  display: inline-flex;
+  align-items: center;
+  padding: 3px var(--sp-sm);
+  border-radius: var(--r-chip);
+  font-size: 11px;
+  font-weight: 500;
+  letter-spacing: 0.02em;
+  line-height: 1.3;
+  white-space: nowrap;
   flex-shrink: 0;
-  margin-top: 1px;
+  margin-top: 2px;
+  border: 0.5px solid;
+  font-family: var(--font-ui);
+}
+
+.insight-tag-positive {
+  background: var(--sage-soft);
+  color: var(--sage-deep);
+  border-color: color-mix(in srgb, var(--sage) 35%, transparent);
+}
+
+.insight-tag-warning {
+  background: var(--warn-soft);
+  color: var(--warn);
+  border-color: color-mix(in srgb, var(--warn) 35%, transparent);
+}
+
+.insight-tag-info {
+  background: var(--sage-wash);
+  color: var(--sage);
+  border-color: color-mix(in srgb, var(--sage) 25%, transparent);
 }
 
 .insight-content {
@@ -1318,15 +1348,16 @@ tbody td {
 }
 
 .insight-title {
-  font-size: 12.5px;
-  font-weight: 600;
+  font-size: 13px;
+  font-weight: 500;
+  line-height: 1.4;
   color: var(--text);
 }
 
 .insight-body {
-  font-size: 12px;
+  font-size: 12.5px;
   color: var(--text-muted);
-  line-height: 1.45;
+  line-height: 1.5;
 }
 
 /* ── Spending trends ──────────────────────────────────────── */
@@ -1450,14 +1481,24 @@ tbody td {
 .streak-badge {
   display: inline-flex;
   align-items: center;
-  gap: 5px;
-  padding: 4px 10px;
+  gap: var(--sp-sm);
+  padding: var(--sp-xs) var(--sp-md);
   background: var(--sage-soft);
   border: 0.5px solid color-mix(in srgb, var(--sage) 30%, transparent);
-  border-radius: 7px;
+  border-radius: var(--r-chip);
   font-size: 11.5px;
-  color: var(--sage-deep);
   font-weight: 500;
+  line-height: 1.3;
+  color: var(--sage-deep);
+  font-family: var(--font-ui);
+}
+
+.streak-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--sage);
+  flex-shrink: 0;
 }
 
 /* ── Year view ────────────────────────────────────────────── */
@@ -2515,15 +2556,16 @@ tbody td {
 }
 
 .achievement-item {
-  display: flex;
-  flex-direction: column;
-  align-items: flex-start;
-  gap: 4px;
-  padding: 10px 12px;
+  display: grid;
+  grid-template-columns: 32px 1fr auto;
+  align-items: center;
+  column-gap: var(--sp-md);
+  row-gap: 2px;
+  padding: var(--sp-md);
   background: var(--surface);
   border: 0.5px solid var(--border);
-  border-radius: 10px;
-  transition: border-color 0.1s;
+  border-radius: var(--r-card);
+  transition: border-color var(--t-quick) var(--ease-quick), background var(--t-quick) var(--ease-quick);
 }
 
 .achievement-unlocked {
@@ -2531,32 +2573,58 @@ tbody td {
 }
 
 .achievement-locked {
-  opacity: 0.5;
+  opacity: 0.55;
 }
 
-.achievement-icon {
-  font-size: 20px;
+/* Letter monogram — design system: 28-32px box, Fraunces 500, white on sage */
+.achievement-glyph {
+  grid-row: 1 / span 2;
+  grid-column: 1;
+  width: 32px;
+  height: 32px;
+  border-radius: 7px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: var(--font-display);
+  font-size: 14px;
+  font-weight: 500;
+  letter-spacing: -0.01em;
+  background: var(--sage);
+  color: var(--bg);
+  flex-shrink: 0;
+}
+
+.achievement-locked .achievement-glyph {
+  background: var(--surface-alt);
+  color: var(--text-faint);
 }
 
 .achievement-name {
-  font-size: 11.5px;
-  font-weight: 600;
+  grid-row: 1;
+  grid-column: 2;
+  font-size: 13px;
+  font-weight: 500;
   color: var(--text);
-  line-height: 1.2;
+  line-height: 1.4;
 }
 
 .achievement-desc {
-  font-size: 10.5px;
+  grid-row: 2;
+  grid-column: 2 / span 2;
+  font-size: 11px;
   color: var(--text-muted);
-  line-height: 1.35;
+  line-height: 1.4;
 }
 
 .achievement-xp {
+  grid-row: 1;
+  grid-column: 3;
   font-family: var(--font-mono);
-  font-size: 10px;
-  font-weight: 600;
+  font-size: 11px;
+  font-weight: 500;
   color: var(--text-faint);
-  margin-top: 2px;
+  font-variant-numeric: tabular-nums;
 }
 
 .achievement-unlocked .achievement-xp {

@@ -556,7 +556,7 @@ function CategoryPieChart({ expenses }: CategoryPieChartProps) {
 
 interface AchievementDef {
   id: string
-  icon: string
+  glyph: string
   name: string
   description: string
   xp: number
@@ -565,26 +565,26 @@ interface AchievementDef {
 
 const ACHIEVEMENT_DEFS: AchievementDef[] = [
   // Getting Started
-  { id: 'first_entry',       icon: '🌱', name: 'First Entry',       description: 'Log your first expense',                              xp: 25,  category: 'Getting Started' },
-  { id: 'month_one',         icon: '📅', name: 'Month One',         description: 'Track both income and expenses in the same month',    xp: 50,  category: 'Getting Started' },
+  { id: 'first_entry',       glyph: 'A', name: 'First Entry',       description: 'Log your first expense',                              xp: 25,  category: 'Getting Started' },
+  { id: 'month_one',         glyph: 'B', name: 'Month One',         description: 'Track both income and expenses in the same month',    xp: 50,  category: 'Getting Started' },
   // Savings
-  { id: 'first_surplus',     icon: '💰', name: 'First Surplus',     description: 'End a month with income greater than expenses',       xp: 100, category: 'Savings' },
-  { id: 'ten_percent',       icon: '🟢', name: '10% Club',          description: 'Save at least 10% of income in a month',             xp: 75,  category: 'Savings' },
-  { id: 'super_saver',       icon: '⭐', name: 'Super Saver',       description: 'Save at least 20% of income in a month',             xp: 150, category: 'Savings' },
-  { id: 'on_a_roll',         icon: '🔥', name: 'On a Roll',         description: 'Positive savings 3 months in a row',                 xp: 200, category: 'Savings' },
-  { id: 'consistent_saver',  icon: '🏆', name: 'Consistent Saver', description: 'Positive savings 6 months in a row',                 xp: 400, category: 'Savings' },
+  { id: 'first_surplus',     glyph: 'C', name: 'First Surplus',     description: 'End a month with income greater than expenses',       xp: 100, category: 'Savings' },
+  { id: 'ten_percent',       glyph: 'D', name: '10% Club',          description: 'Save at least 10% of income in a month',             xp: 75,  category: 'Savings' },
+  { id: 'super_saver',       glyph: 'E', name: 'Super Saver',       description: 'Save at least 20% of income in a month',             xp: 150, category: 'Savings' },
+  { id: 'on_a_roll',         glyph: 'F', name: 'On a Roll',         description: 'Positive savings 3 months in a row',                 xp: 200, category: 'Savings' },
+  { id: 'consistent_saver',  glyph: 'G', name: 'Consistent Saver', description: 'Positive savings 6 months in a row',                 xp: 400, category: 'Savings' },
   // Budgeting
-  { id: 'budget_setter',     icon: '📊', name: 'Budget Setter',     description: 'Set budgets for 3 or more categories',               xp: 50,  category: 'Budgeting' },
-  { id: 'budget_keeper',     icon: '✅', name: 'Budget Keeper',     description: 'Stay under your total budget for a full month',      xp: 100, category: 'Budgeting' },
-  { id: 'perfect_month',     icon: '🎯', name: 'Perfect Month',     description: 'Every category stays under budget in a month',       xp: 200, category: 'Budgeting' },
-  { id: 'budget_streak',     icon: '🔄', name: 'Budget Streak',     description: 'Stay under budget 3 months in a row',                xp: 300, category: 'Budgeting' },
+  { id: 'budget_setter',     glyph: 'H', name: 'Budget Setter',     description: 'Set budgets for 3 or more categories',               xp: 50,  category: 'Budgeting' },
+  { id: 'budget_keeper',     glyph: 'I', name: 'Budget Keeper',     description: 'Stay under your total budget for a full month',      xp: 100, category: 'Budgeting' },
+  { id: 'perfect_month',     glyph: 'J', name: 'Perfect Month',     description: 'Every category stays under budget in a month',       xp: 200, category: 'Budgeting' },
+  { id: 'budget_streak',     glyph: 'K', name: 'Budget Streak',     description: 'Stay under budget 3 months in a row',                xp: 300, category: 'Budgeting' },
   // Planning
-  { id: 'autopilot',         icon: '🔁', name: 'Autopilot',         description: 'Set up your first recurring expense',                xp: 50,  category: 'Planning' },
-  { id: 'planner_pro',       icon: '📋', name: 'Planner Pro',       description: 'Have 3 or more active recurring expenses',           xp: 100, category: 'Planning' },
+  { id: 'autopilot',         glyph: 'L', name: 'Autopilot',         description: 'Set up your first recurring expense',                xp: 50,  category: 'Planning' },
+  { id: 'planner_pro',       glyph: 'M', name: 'Planner Pro',       description: 'Have 3 or more active recurring expenses',           xp: 100, category: 'Planning' },
   // Milestones
-  { id: 'three_months',      icon: '🌊', name: '3 Months Strong',   description: 'Track your finances for 3 months',                   xp: 100, category: 'Milestones' },
-  { id: 'half_year',         icon: '🏄', name: 'Half Year',         description: 'Track your finances for 6 months',                   xp: 200, category: 'Milestones' },
-  { id: 'year_round',        icon: '🧗', name: 'Year Round',        description: 'Track your finances for 12 months',                  xp: 500, category: 'Milestones' },
+  { id: 'three_months',      glyph: 'N', name: '3 Months Strong',   description: 'Track your finances for 3 months',                   xp: 100, category: 'Milestones' },
+  { id: 'half_year',         glyph: 'O', name: 'Half Year',         description: 'Track your finances for 6 months',                   xp: 200, category: 'Milestones' },
+  { id: 'year_round',        glyph: 'P', name: 'Year Round',        description: 'Track your finances for 12 months',                  xp: 500, category: 'Milestones' },
 ]
 
 interface LevelDef {
@@ -733,7 +733,7 @@ function getMonthForDate(dateStr: string, startDay: number): MonthState {
 
 interface Insight {
   type: 'positive' | 'warning' | 'info'
-  icon: string
+  tag: string
   title: string
   body: string
 }
@@ -797,7 +797,7 @@ function computeInsights(
       const avg = prevData.map(m => m[biggestIncreaseCat] ?? 0).reduce((s, v) => s + v, 0) / prevData.length
       insights.push({
         type: 'warning',
-        icon: '📈',
+        tag: 'Spike',
         title: `${biggestIncreaseCat} is up ${Math.round(biggestIncreasePct)}%`,
         body: `You've spent ${fmt(currentByCat[biggestIncreaseCat])} this month vs your ${monthsWithData}-month average of ${fmt(avg)}.`,
       })
@@ -818,7 +818,7 @@ function computeInsights(
     if (topCat && topSaving > 300) {
       insights.push({
         type: 'info',
-        icon: '💡',
+        tag: 'Tip',
         title: `Save ~${fmt(topSaving)} on ${topCat}`,
         body: `Bringing ${topCat} spending back to your recent average could save you around ${fmt(topSaving)} this month.`,
       })
@@ -845,7 +845,7 @@ function computeInsights(
         const type = pct > 50 ? 'warning' : pct > 30 ? 'info' : 'positive'
         insights.push({
           type,
-          icon: pct > 40 ? '⚠️' : '🔄',
+          tag: pct > 40 ? 'Heads-up' : 'Recurring',
           title: `Recurring costs: ${pct}% of income`,
           body: `Your ${recurringExpenses.filter(r => r.active).length} recurring expenses add up to ~${fmt(Math.round(monthlyRecurring))}/month.`,
         })
@@ -871,7 +871,7 @@ function computeInsights(
     const label = new Date(y, m - 1).toLocaleString('default', { month: 'long', year: 'numeric' })
     insights.push({
       type: 'positive',
-      icon: '🏆',
+      tag: 'Best ever',
       title: `Best month: ${label}`,
       body: `You saved ${Math.round(bestRate)}% of your income — your personal record. Keep it up!`,
     })
@@ -2730,7 +2730,7 @@ function SmartInsightsCard({ expenses, incomes, recurringExpenses, currentMonth,
       <div className="insights-list">
         {insights.map((ins, i) => (
           <div key={i} className={`insight-row insight-${ins.type}`}>
-            <span className="insight-icon">{ins.icon}</span>
+            <span className={`insight-tag insight-tag-${ins.type}`}>{ins.tag}</span>
             <div className="insight-content">
               <span className="insight-title">{ins.title}</span>
               <span className="insight-body">{ins.body}</span>
@@ -2846,12 +2846,14 @@ function OverviewStatsCard({ expenses, incomes, budgets, currentMonth, periodSta
         <div className="stats-streaks">
           {savingsStreak > 0 && (
             <span className="streak-badge">
-              💚 Saving {savingsStreak} month{savingsStreak > 1 ? 's' : ''} in a row
+              <span className="streak-dot" aria-hidden="true" />
+              Saving {savingsStreak} month{savingsStreak > 1 ? 's' : ''} in a row
             </span>
           )}
           {budgetStreak > 0 && (
             <span className="streak-badge">
-              🎯 Under budget {budgetStreak} month{budgetStreak > 1 ? 's' : ''} in a row
+              <span className="streak-dot" aria-hidden="true" />
+              Under budget {budgetStreak} month{budgetStreak > 1 ? 's' : ''} in a row
             </span>
           )}
         </div>
@@ -3008,7 +3010,7 @@ function ProfileTab({ expenses, incomes, budgets, recurringExpenses, session, gu
                 const done = unlocked.has(a.id)
                 return (
                   <div key={a.id} className={`achievement-item${done ? ' achievement-unlocked' : ' achievement-locked'}`} title={a.description}>
-                    <span className="achievement-icon">{a.icon}</span>
+                    <span className="achievement-glyph" aria-hidden="true">{a.glyph}</span>
                     <span className="achievement-name">{a.name}</span>
                     <span className="achievement-desc">{a.description}</span>
                     <span className="achievement-xp">+{a.xp} XP</span>
@@ -3177,7 +3179,7 @@ function GoalsTab({ session, guestMode }: GoalsTabProps) {
                   <div className="goal-bar-fill" style={{ width: `${pct.toFixed(1)}%`, background: done ? '#10b981' : goal.color }} />
                 </div>
                 {done ? (
-                  <p className="goal-done-label">🎉 Goal reached!</p>
+                  <p className="goal-done-label">Goal reached</p>
                 ) : contributing === goal.id ? (
                   <div className="goal-contribute-row">
                     <input

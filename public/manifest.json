@@ -5,8 +5,8 @@
   "start_url": "/sage/",
   "scope": "/sage/",
   "display": "standalone",
-  "background_color": "#0f2d1a",
-  "theme_color": "#14532d",
+  "background_color": "#FAF9F5",
+  "theme_color": "#5C7A5E",
   "orientation": "portrait-primary",
   "icons": [
     {
